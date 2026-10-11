@@ -39,18 +39,19 @@ header{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:
 main{padding:1rem clamp(1rem,4vw,2.5rem) 5rem}
 .bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1rem}
 .bar .grow{flex:1;color:var(--soft)}
-.grid{columns:2 160px;column-gap:14px}
-@media(min-width:700px){.grid{columns:3}}
-@media(min-width:1100px){.grid{columns:4}}
+.grid{column-count:2;column-gap:10px}
+@media(min-width:700px){.grid{column-count:3;column-gap:14px}}
+@media(min-width:1100px){.grid{column-count:4}}
 .item{break-inside:avoid;margin-bottom:14px;position:relative;overflow:hidden;background:var(--card);box-shadow:var(--shadow);cursor:pointer;border-radius:28px 12px 28px 12px;transition:transform .25s}
 .item:nth-child(3n+2){border-radius:12px 30px 12px 30px}
 .item:nth-child(4n){border-radius:40px 40px 14px 40px}
 .item:hover{transform:scale(1.02) rotate(.4deg)}
-.item img,.item video{width:100%;display:block;min-height:60px}
-.item .by{position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:.35rem;background:rgba(0,0,0,.55);color:#fff;font-size:.75rem;padding:.15rem .6rem .15rem .2rem;border-radius:999px}
+.item img,.item video{width:100%;display:block;min-height:90px;background:var(--line)}
+.item .by{position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:.35rem;max-width:calc(100% - 16px);overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.55);color:#fff;font-size:.75rem;padding:.15rem .6rem .15rem .2rem;border-radius:999px}
 .item .dl{position:absolute;right:8px;top:8px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:1rem}
 .av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:.7rem;font-weight:bold;color:#fff}
 .play{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.8rem}
+@media(max-width:699px){.item{margin-bottom:10px}}
 .empty{text-align:center;color:var(--soft);padding:3rem 1rem}
 #lb{position:fixed;inset:0;background:rgba(12,16,11,.92);display:none;place-items:start center;overflow-y:auto;z-index:10;padding:3.5rem .5rem 2rem}
 #lb.on{display:grid}
@@ -250,10 +251,17 @@ async function loadMedia() {
   show("#empty-m", !media.length);
   $("#grid").innerHTML = media.map((m, i) => `
     <div class="item" data-i="${i}">
-      ${m.kind === "video" ? `<video src="${m.url}#t=0.1" muted playsinline preload="metadata"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" alt="${esc(m.caption)}">`}
+      ${m.kind === "video" ? `<video src="${m.url}#t=0.1" muted playsinline preload="metadata"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" decoding="async" alt="${esc(m.caption)}">`}
       <span class="by">${avatar(nameOf(m))}${esc(nameOf(m))}</span>
       <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>
     </div>`).join("");
+  $("#grid").querySelectorAll("img,video").forEach(el => {
+    const base = el.getAttribute("src").split("#")[0], hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
+    el.addEventListener("error", () => {
+      const n = +(el.dataset.t || 0);
+      if (n < 3) { el.dataset.t = n + 1; setTimeout(() => { el.src = base + "&r=" + (n + 1) + hash; }, 700 * (n + 1)); }
+    });
+  });
   $("#grid").querySelectorAll(".item").forEach(el => el.onclick = () => openLb(+el.dataset.i));
   $("#grid").querySelectorAll(".dl").forEach(b => b.onclick = e => { e.stopPropagation(); download(media[+b.dataset.i]); });
 }
@@ -264,8 +272,9 @@ $("#b-ref").onclick = () => { $("#up-msg").textContent = ""; loadAlbums(); };
 $("#file").onchange = async e => {
   const files = [...e.target.files], btn = $("#b-up"); let ok = 0, n = 0;
   btn.disabled = true;
-  for (const f of files) {
+  for (const f0 of files) {
     $("#up-msg").textContent = `Subiendo ${++n} de ${files.length}…`;
+    const f = await shrink(f0);
     const ext = (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
     const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const up = await db.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined });
@@ -279,6 +288,22 @@ $("#file").onchange = async e => {
   if (ok === files.length) $("#up-msg").textContent = "¡Listo! 🌼";
   loadMedia();
 };
+
+/* ---------- Reducir fotos antes de subir ---------- */
+async function shrink(f) {
+  if (!f.type.startsWith("image/") || f.type === "image/gif" || f.type === "image/svg+xml") return f;
+  try {
+    const bmp = await createImageBitmap(f, { imageOrientation: "from-image" });
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.82));
+    if (!blob || blob.size >= f.size) return f;
+    return new File([blob], f.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch { return f; }
+}
 
 /* ---------- Descargar ---------- */
 async function download(m) {
