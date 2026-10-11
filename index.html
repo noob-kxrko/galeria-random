@@ -105,17 +105,14 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
     <h1>🌿 Galería</h1>
     <div class="hbtns">
       <span id="hello" style="color:var(--soft)"></span>
-      <button class="btn small ghost" id="b-new">+ Grupo</button>
-      <button class="btn small ghost" id="b-join">Unirme con código</button>
       <button class="btn small ghost" id="b-out">Salir</button>
     </div>
   </header>
-  <div class="tabs" id="groups"></div>
   <main>
     <div id="gal">
       <div class="bar">
-        <h2 id="g-name"></h2>
-        <span class="grow" id="g-info"></span>
+        <h2>Galería de todos</h2>
+        <span class="grow">Lo que subas lo ven y lo comentan todos los que entren.</span>
       </div>
       <div class="tabs" id="albums" style="padding:0;margin-bottom:1rem"></div>
       <div class="bar">
@@ -181,9 +178,9 @@ let db;
 try { db = supabase.createClient(URL_, KEY_); } catch (e) { fatal("Error al conectar con Supabase: " + e.message); }
 show("#auth", true);
 
-let user = null, groups = [], gid = null, albums = [], aid = null, media = [], names = {}, cur = -1, tok = 0;
+let user = null, albums = [], aid = null, media = [], cur = -1, tok = 0;
 
-const nameOf = id => names[id] || "alguien";
+const nameOf = m => m.author_name || "alguien";
 const avatar = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return `<span class="av" style="background:hsl(${h} 25% 42%)">${esc((n[0] || "?").toUpperCase())}</span>`; };
 
 /* ---------- Acceso ---------- */
@@ -209,39 +206,16 @@ db.auth.onAuthStateChange((_e, session) => {
   show("#auth", !u); show("#app", !!u);
   if (!changed) return;
   $("#hello").textContent = u ? "Hola, " + (u.user_metadata?.name || u.email) : "";
-  setTimeout(() => { if (u) loadGroups(); else { groups = []; gid = null; closeLb(); } }, 0);
+  setTimeout(() => { if (u) loadAlbums(); else { albums = []; media = []; closeLb(); } }, 0);
 });
 
-/* ---------- Grupos ---------- */
-async function loadGroups(select) {
-  const { data, error } = await db.from("groups").select("*").order("created_at");
-  if (error) return alert(error.message);
-  groups = data || [];
-  gid = select !== undefined ? select : (groups.find(g => g.id === gid) ? gid : null);
-  renderGroups();
-  openGroup(gid);
-}
-function renderGroups() {
-  $("#groups").innerHTML = `<button class="chip ${!gid ? "on" : ""}" data-id="">🏠 Mis recuerdos</button>` +
-    groups.map(g => `<button class="chip ${g.id === gid ? "on" : ""}" data-id="${g.id}">${esc(g.name)}</button>`).join("");
-  $("#groups").querySelectorAll(".chip").forEach(b => b.onclick = () => { gid = b.dataset.id || null; renderGroups(); openGroup(gid); });
-}
-async function openGroup(id) {
-  const g = id ? groups.find(x => x.id === id) : null; if (id && !g) return;
-  $("#g-name").textContent = g ? g.name : "Mis recuerdos";
-  $("#g-info").innerHTML = g ? `Código para invitar: <span class="code">${esc(g.invite_code)}</span>` : "Solo tú ves esto. Para compartir con amigos, crea o únete a un grupo.";
+/* ---------- Álbumes ---------- */
+async function loadAlbums() {
   aid = null;
-  let aq = db.from("albums").select("*").order("created_at");
-  aq = g ? aq.eq("group_id", id) : aq.is("group_id", null).eq("user_id", user.id);
-  const [a, m] = await Promise.all([aq, g ? db.from("members").select("user_id,display_name").eq("group_id", id) : Promise.resolve({ data: [] })]);
-  if (id !== gid) return;
-  albums = a.data || [];
-  names = Object.fromEntries((m.data || []).map(x => [x.user_id, x.display_name]));
-  names[user.id] = names[user.id] || user.user_metadata?.name || user.email;
+  const { data } = await db.from("albums").select("*").order("created_at");
+  albums = data || [];
   renderAlbums(); loadMedia();
 }
-
-/* ---------- Álbumes ---------- */
 function renderAlbums() {
   $("#albums").innerHTML = `<button class="chip ${!aid ? "on" : ""}" data-id="">Todo</button>` +
     albums.map(a => `<button class="chip ${a.id === aid ? "on" : ""}" data-id="${a.id}">${esc(a.name)}</button>`).join("");
@@ -252,7 +226,6 @@ function renderAlbums() {
 async function loadMedia() {
   const my = ++tok;
   let q = db.from("media").select("*").order("created_at", { ascending: false });
-  q = gid ? q.eq("group_id", gid) : q.is("group_id", null).eq("user_id", user.id);
   if (aid) q = q.eq("album_id", aid);
   const { data, error } = await q;
   if (my !== tok) return;
@@ -268,7 +241,7 @@ async function loadMedia() {
   $("#grid").innerHTML = media.map((m, i) => `
     <div class="item" data-i="${i}">
       ${m.kind === "video" ? `<video src="${m.url}#t=0.1" muted playsinline preload="metadata"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" alt="${esc(m.caption)}">`}
-      <span class="by">${avatar(nameOf(m.user_id))}${esc(nameOf(m.user_id))}</span>
+      <span class="by">${avatar(nameOf(m))}${esc(nameOf(m))}</span>
       <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>
     </div>`).join("");
   $("#grid").querySelectorAll(".item").forEach(el => el.onclick = () => openLb(+el.dataset.i));
@@ -283,11 +256,11 @@ $("#file").onchange = async e => {
   for (const f of files) {
     $("#up-msg").textContent = `Subiendo ${++n} de ${files.length}…`;
     const ext = (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const path = `${gid || user.id}/${crypto.randomUUID()}.${ext}`;
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const up = await db.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined });
     if (up.error) { $("#up-msg").textContent = "Error: " + up.error.message; continue; }
     const kind = f.type.startsWith("video") || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name) ? "video" : "image";
-    const ins = await db.from("media").insert({ group_id: gid, album_id: aid, path, kind, caption: f.name });
+    const ins = await db.from("media").insert({ album_id: aid, path, kind, caption: f.name });
     if (ins.error) { await db.storage.from(BUCKET).remove([path]); $("#up-msg").textContent = "Error: " + ins.error.message; continue; }
     ok++;
   }
@@ -309,7 +282,7 @@ async function download(m) {
 /* ---------- Visor ---------- */
 function openLb(i) {
   if (i < 0 || i >= media.length) return;
-  cur = i; const m = media[i], who = nameOf(m.user_id);
+  cur = i; const m = media[i], who = nameOf(m);
   $("#lb-in").innerHTML = (m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline></video>` : `<img src="${m.url}" alt="">`) +
     `<div class="info">${avatar(who)}<span>Subido por <b>${esc(who)}</b> · ${new Date(m.created_at).toLocaleDateString("es")}</span>
      <button class="btn small" id="lb-d">⬇ Descargar</button>
@@ -341,7 +314,7 @@ async function loadComments(m, i) {
 async function sendComment(m) {
   const inp = $("#cm-in"), body = inp.value.trim(); if (!body) return;
   inp.disabled = true;
-  const { error } = await db.from("comments").insert({ media_id: m.id, body, author_name: names[user.id] || user.user_metadata?.name || user.email });
+  const { error } = await db.from("comments").insert({ media_id: m.id, body });
   inp.disabled = false;
   if (error) return alert(error.message);
   inp.value = ""; loadComments(m, cur); inp.focus();
@@ -372,23 +345,11 @@ function ask(title, ph1, askName) {
     d.returnValue = ""; d.showModal();
   });
 }
-$("#b-new").onclick = async () => {
-  const r = await ask("Nuevo grupo", "Nombre del grupo", true); if (!r || !r[0]) return;
-  const { data, error } = await db.rpc("create_group", { gname: r[0], dname: r[1] || user.user_metadata?.name || "Yo" });
-  if (error) return alert(error.message);
-  loadGroups(data.id);
-};
-$("#b-join").onclick = async () => {
-  const r = await ask("Unirme a un grupo", "Código de invitación", true); if (!r || !r[0]) return;
-  const { data, error } = await db.rpc("join_group", { code: r[0], dname: r[1] || user.user_metadata?.name || "Yo" });
-  if (error) return alert(error.message);
-  loadGroups(data.id);
-};
 $("#b-alb").onclick = async () => {
   const r = await ask("Nuevo álbum", "Nombre (ej. Viajes, Random)", false); if (!r || !r[0]) return;
-  const { error } = await db.from("albums").insert({ group_id: gid, name: r[0] });
+  const { error } = await db.from("albums").insert({ name: r[0] });
   if (error) return alert(error.message);
-  openGroup(gid);
+  loadAlbums();
 };
 </script>
 </body>
