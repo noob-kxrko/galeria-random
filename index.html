@@ -104,7 +104,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <header>
     <h1>🌿 Galería</h1>
     <div class="hbtns">
-      <span id="hello" style="color:var(--soft)"></span>
+      <button class="btn small ghost" id="hello" title="Cambiar mi nombre"></button>
       <button class="btn small ghost" id="b-out">Salir</button>
     </div>
   </header>
@@ -118,6 +118,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
       <div class="bar">
         <button class="btn" id="b-up">⬆ Subir fotos o videos</button>
         <button class="btn small ghost" id="b-alb">+ Álbum</button>
+        <button class="btn small ghost" id="b-ref">🔄 Actualizar</button>
         <input type="file" id="file" accept="image/*,video/*" multiple hidden>
         <span class="msg" id="up-msg"></span>
       </div>
@@ -180,7 +181,9 @@ show("#auth", true);
 
 let user = null, albums = [], aid = null, media = [], cur = -1, tok = 0;
 
-const nameOf = m => m.author_name || "alguien";
+let userNames = {};
+const nameOf = m => userNames[m.user_id] || m.author_name || (user && m.user_id === user.id ? myName() : "alguien");
+const myName = () => user?.user_metadata?.name || (user?.email || "").split("@")[0] || "alguien";
 const avatar = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return `<span class="av" style="background:hsl(${h} 25% 42%)">${esc((n[0] || "?").toUpperCase())}</span>`; };
 
 /* ---------- Acceso ---------- */
@@ -205,8 +208,8 @@ db.auth.onAuthStateChange((_e, session) => {
   user = u;
   show("#auth", !u); show("#app", !!u);
   if (!changed) return;
-  $("#hello").textContent = u ? "Hola, " + (u.user_metadata?.name || u.email) : "";
-  setTimeout(() => { if (u) loadAlbums(); else { albums = []; media = []; closeLb(); } }, 0);
+  $("#hello").textContent = u ? "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️" : "";
+  setTimeout(() => { if (u) { loadAlbums(); if (!u.user_metadata?.name) setTimeout(changeName, 600); } else { albums = []; media = []; closeLb(); } }, 0);
 });
 
 /* ---------- Álbumes ---------- */
@@ -223,8 +226,14 @@ function renderAlbums() {
 }
 
 /* ---------- Medios ---------- */
+async function loadNames() {
+  const { data, error } = await db.rpc("user_names");
+  if (error) { $("#up-msg").textContent = "⚠️ No se pueden leer los nombres (" + error.message + "). Ejecuta nombres.sql en Supabase."; return; }
+  userNames = Object.fromEntries((data || []).map(x => [x.id, x.name]));
+}
 async function loadMedia() {
   const my = ++tok;
+  await loadNames();
   let q = db.from("media").select("*").order("created_at", { ascending: false });
   if (aid) q = q.eq("album_id", aid);
   const { data, error } = await q;
@@ -232,8 +241,9 @@ async function loadMedia() {
   if (error) return $("#up-msg").textContent = error.message;
   media = data || [];
   if (media.length) {
-    const { data: urls } = await db.storage.from(BUCKET).createSignedUrls(media.map(m => m.path), 3600);
+    const { data: urls, error: e2 } = await db.storage.from(BUCKET).createSignedUrls(media.map(m => m.path), 3600);
     if (my !== tok) return;
+    if (e2) $("#up-msg").textContent = "No se pudieron cargar las imágenes: " + e2.message;
     const map = Object.fromEntries((urls || []).map(u => [u.path, u.signedUrl]));
     media.forEach(m => m.url = map[m.path]);
   }
@@ -250,6 +260,7 @@ async function loadMedia() {
 document.addEventListener("visibilitychange", () => { if (!document.hidden && user && cur < 0) loadMedia(); });
 
 $("#b-up").onclick = () => $("#file").click();
+$("#b-ref").onclick = () => { $("#up-msg").textContent = ""; loadAlbums(); };
 $("#file").onchange = async e => {
   const files = [...e.target.files], btn = $("#b-up"); let ok = 0, n = 0;
   btn.disabled = true;
@@ -260,7 +271,7 @@ $("#file").onchange = async e => {
     const up = await db.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined });
     if (up.error) { $("#up-msg").textContent = "Error: " + up.error.message; continue; }
     const kind = f.type.startsWith("video") || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name) ? "video" : "image";
-    const ins = await db.from("media").insert({ album_id: aid, path, kind, caption: f.name });
+    const ins = await db.from("media").insert({ album_id: aid, path, kind, caption: f.name, author_name: myName() });
     if (ins.error) { await db.storage.from(BUCKET).remove([path]); $("#up-msg").textContent = "Error: " + ins.error.message; continue; }
     ok++;
   }
@@ -308,13 +319,13 @@ async function loadComments(m, i) {
   const { data, error } = await db.from("comments").select("*").eq("media_id", m.id).order("created_at");
   const box = $("#cm-list"); if (cur !== i || !box) return;
   if (error) return box.textContent = error.message;
-  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(c.author_name || "alguien")}<div><b>${esc(c.author_name || "alguien")}</b> <small>${new Date(c.created_at).toLocaleDateString("es")}</small><br>${esc(c.body)}${c.user_id === user.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
+  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c))}<div><b>${esc(nameOf(c))}</b> <small>${new Date(c.created_at).toLocaleDateString("es")}</small><br>${esc(c.body)}${c.user_id === user.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
   box.querySelectorAll(".cdel").forEach(a => a.onclick = async e => { e.preventDefault(); await db.from("comments").delete().eq("id", a.dataset.id); loadComments(m, i); });
 }
 async function sendComment(m) {
   const inp = $("#cm-in"), body = inp.value.trim(); if (!body) return;
   inp.disabled = true;
-  const { error } = await db.from("comments").insert({ media_id: m.id, body });
+  const { error } = await db.from("comments").insert({ media_id: m.id, body, author_name: myName() });
   inp.disabled = false;
   if (error) return alert(error.message);
   inp.value = ""; loadComments(m, cur); inp.focus();
@@ -351,6 +362,17 @@ $("#b-alb").onclick = async () => {
   if (error) return alert(error.message);
   loadAlbums();
 };
+
+/* ---------- Cambiar mi nombre ---------- */
+async function changeName() {
+  const r = await ask("¿Cómo te llamas?", "Tu nombre", false); if (!r || !r[0]) return;
+  const { data, error } = await db.auth.updateUser({ data: { name: r[0] } });
+  if (error) return alert(error.message);
+  user = data.user;
+  $("#hello").textContent = "Hola, " + r[0] + " ✏️";
+  loadMedia();
+}
+$("#hello").onclick = changeName;
 </script>
 </body>
 </html>
