@@ -39,19 +39,24 @@ header{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:
 main{padding:1rem clamp(1rem,4vw,2.5rem) 5rem}
 .bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:1rem}
 .bar .grow{flex:1;color:var(--soft)}
-.grid{column-count:2;column-gap:10px}
-@media(min-width:700px){.grid{column-count:3;column-gap:14px}}
-@media(min-width:1100px){.grid{column-count:4}}
-.item{break-inside:avoid;margin-bottom:14px;position:relative;overflow:hidden;background:var(--card);box-shadow:var(--shadow);cursor:pointer;border-radius:28px 12px 28px 12px;transition:transform .25s}
-.item:nth-child(3n+2){border-radius:12px 30px 12px 30px}
-.item:nth-child(4n){border-radius:40px 40px 14px 40px}
+
+/* --- SOLUCIÓN: Grid estricto de 2 columnas en teléfonos para que vayan lado a lado --- */
+.grid{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3, minmax(0, 1fr));gap:14px}}
+@media(min-width:1100px){.grid{grid-template-columns:repeat(4, minmax(0, 1fr))}}
+
+.item{position:relative;overflow:hidden;background:var(--card);box-shadow:var(--shadow);cursor:pointer;border-radius:24px 12px 24px 12px;transition:transform .25s;display:flex;flex-direction:column}
+.item:nth-child(3n+2){border-radius:12px 26px 12px 26px}
+.item:nth-child(4n){border-radius:30px 30px 12px 30px}
 .item:hover{transform:scale(1.02) rotate(.4deg)}
-.item img,.item video{width:100%;display:block;min-height:90px;background:var(--line)}
-.item .by{position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:.35rem;max-width:calc(100% - 16px);overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.55);color:#fff;font-size:.75rem;padding:.15rem .6rem .15rem .2rem;border-radius:999px}
-.item .dl{position:absolute;right:8px;top:8px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:1rem}
-.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:.7rem;font-weight:bold;color:#fff}
-.play{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:0 .5rem;font-size:.8rem}
-@media(max-width:699px){.item{margin-bottom:10px}}
+.item img,.item video{width:100%;height:170px;object-fit:cover;display:block;background:var(--line)}
+@media(min-width:700px){.item img,.item video{height:240px}}
+
+.item .by{position:absolute;left:6px;bottom:6px;display:flex;align-items:center;gap:.3rem;max-width:calc(100% - 12px);overflow:hidden;white-space:nowrap;background:rgba(0,0,0,.55);color:#fff;font-size:.7rem;padding:.1rem .5rem .1rem .2rem;border-radius:999px}
+.item .dl{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:.9rem;display:grid;place-items:center}
+.av{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:.65rem;font-weight:bold;color:#fff}
+.play{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:0 .4rem;font-size:.75rem}
+
 .empty{text-align:center;color:var(--soft);padding:3rem 1rem}
 #lb{position:fixed;inset:0;background:rgba(12,16,11,.92);display:none;place-items:start center;overflow-y:auto;z-index:10;padding:3.5rem .5rem 2rem}
 #lb.on{display:grid}
@@ -174,18 +179,48 @@ applyTheme();
 function fatal(t) { show("#auth", false); show("#app", false); show("#fatal", true); $("#fatal-t").textContent = t; throw new Error(t); }
 const URL_ = SUPABASE_URL.trim(), KEY_ = SUPABASE_ANON_KEY.trim();
 if (URL_.startsWith("TU_") || KEY_.startsWith("TU_")) { show("#setup", true); throw new Error("Configura Supabase en index.html"); }
-if (!window.supabase) fatal("No cargó la librería de Supabase. Revisa tu internet, desactiva bloqueadores de anuncios y recarga con Ctrl+F5.");
-if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(URL_)) fatal("La SUPABASE_URL no tiene el formato correcto. Debe ser como https://abcdefgh.supabase.co (sin nada después de .co).");
+if (!window.supabase) fatal("No cargó la librería de Supabase.");
+if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(URL_)) fatal("La SUPABASE_URL no tiene el formato correcto.");
 let db;
 try { db = supabase.createClient(URL_, KEY_); } catch (e) { fatal("Error al conectar con Supabase: " + e.message); }
-show("#auth", true);
 
 let user = null, albums = [], aid = null, media = [], cur = -1, tok = 0;
-
 let userNames = {};
 const nameOf = m => userNames[m.user_id] || m.author_name || (user && m.user_id === user.id ? myName() : "alguien");
 const myName = () => user?.user_metadata?.name || (user?.email || "").split("@")[0] || "alguien";
 const avatar = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return `<span class="av" style="background:hsl(${h} 25% 42%)">${esc((n[0] || "?").toUpperCase())}</span>`; };
+
+/* ---------- Sincronización robusta de sesión (Sin bloqueos en blanco) ---------- */
+async function initApp() {
+  try {
+    const { data: { session } } = await db.auth.getSession();
+    setSessionUser(session?.user ?? null);
+  } catch {
+    setSessionUser(null);
+  }
+}
+
+db.auth.onAuthStateChange((_event, session) => {
+  setSessionUser(session?.user ?? null);
+});
+
+function setSessionUser(u) {
+  const changed = u?.id !== user?.id;
+  user = u;
+  show("#auth", !u);
+  show("#app", !!u);
+  if (!u) {
+    albums = []; media = []; closeLb();
+    return;
+  }
+  $("#hello").textContent = "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️";
+  if (changed) {
+    loadAlbums();
+    if (!u.user_metadata?.name) setTimeout(changeName, 600);
+  }
+}
+
+initApp();
 
 /* ---------- Acceso ---------- */
 async function auth(kind) {
@@ -204,21 +239,13 @@ $("#a-up").onclick = () => auth("up");
 ["#a-mail", "#a-pass", "#a-name"].forEach(s => $(s).addEventListener("keydown", e => { if (e.key === "Enter") auth("in"); }));
 $("#b-out").onclick = () => db.auth.signOut();
 
-db.auth.onAuthStateChange((_e, session) => {
-  const u = session?.user ?? null, changed = u?.id !== user?.id;
-  user = u;
-  show("#auth", !u); show("#app", !!u);
-  if (!changed) return;
-  $("#hello").textContent = u ? "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️" : "";
-  setTimeout(() => { if (u) { loadAlbums(); if (!u.user_metadata?.name) setTimeout(changeName, 600); } else { albums = []; media = []; closeLb(); } }, 0);
-});
-
 /* ---------- Álbumes ---------- */
 async function loadAlbums() {
   aid = null;
   const { data } = await db.from("albums").select("*").order("created_at");
   albums = data || [];
-  renderAlbums(); loadMedia();
+  renderAlbums(); 
+  loadMedia();
 }
 function renderAlbums() {
   $("#albums").innerHTML = `<button class="chip ${!aid ? "on" : ""}" data-id="">Todo</button>` +
@@ -229,25 +256,40 @@ function renderAlbums() {
 /* ---------- Medios ---------- */
 async function loadNames() {
   const { data, error } = await db.rpc("user_names");
-  if (error) { $("#up-msg").textContent = "⚠️ No se pueden leer los nombres (" + error.message + "). Ejecuta nombres.sql en Supabase."; return; }
+  if (error) return;
   userNames = Object.fromEntries((data || []).map(x => [x.id, x.name]));
 }
-async function loadMedia() {
+
+async function loadMedia(retryCount = 0) {
   const my = ++tok;
   await loadNames();
   let q = db.from("media").select("*").order("created_at", { ascending: false });
   if (aid) q = q.eq("album_id", aid);
   const { data, error } = await q;
   if (my !== tok) return;
-  if (error) return $("#up-msg").textContent = error.message;
+  
+  if (error) {
+    $("#up-msg").textContent = error.message;
+    return;
+  }
+  
   media = data || [];
+  
+  // Si la recarga móvil da vacío momentáneamente, reintentamos hasta 2 veces con pequeño margen
+  if (!media.length && retryCount < 2 && user) {
+    setTimeout(() => { if (my === tok) loadMedia(retryCount + 1); }, 400);
+    return;
+  }
+
   if (media.length) {
     const { data: urls, error: e2 } = await db.storage.from(BUCKET).createSignedUrls(media.map(m => m.path), 3600);
     if (my !== tok) return;
-    if (e2) $("#up-msg").textContent = "No se pudieron cargar las imágenes: " + e2.message;
-    const map = Object.fromEntries((urls || []).map(u => [u.path, u.signedUrl]));
-    media.forEach(m => m.url = map[m.path]);
+    if (!e2 && urls) {
+      const map = Object.fromEntries(urls.map(u => [u.path, u.signedUrl]));
+      media.forEach(m => m.url = map[m.path]);
+    }
   }
+  
   show("#empty-m", !media.length);
   $("#grid").innerHTML = media.map((m, i) => `
     <div class="item" data-i="${i}">
@@ -255,16 +297,19 @@ async function loadMedia() {
       <span class="by">${avatar(nameOf(m))}${esc(nameOf(m))}</span>
       <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>
     </div>`).join("");
+
   $("#grid").querySelectorAll("img,video").forEach(el => {
-    const base = el.getAttribute("src").split("#")[0], hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
+    const base = el.getAttribute("src")?.split("#")[0] || "", hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
     el.addEventListener("error", () => {
       const n = +(el.dataset.t || 0);
       if (n < 3) { el.dataset.t = n + 1; setTimeout(() => { el.src = base + "&r=" + (n + 1) + hash; }, 700 * (n + 1)); }
     });
   });
+  
   $("#grid").querySelectorAll(".item").forEach(el => el.onclick = () => openLb(+el.dataset.i));
   $("#grid").querySelectorAll(".dl").forEach(b => b.onclick = e => { e.stopPropagation(); download(media[+b.dataset.i]); });
 }
+
 document.addEventListener("visibilitychange", () => { if (!document.hidden && user && cur < 0) loadMedia(); });
 
 $("#b-up").onclick = () => $("#file").click();
@@ -307,6 +352,7 @@ async function shrink(f) {
 
 /* ---------- Descargar ---------- */
 async function download(m) {
+  if (!m.url) return;
   const ext = m.path.split(".").pop();
   const name = (m.caption || `recuerdo.${ext}`).replace(/[\\/:*?"<>|]/g, "_");
   const { data, error } = await db.storage.from(BUCKET).createSignedUrl(m.path, 120, { download: name });
@@ -322,7 +368,7 @@ function openLb(i) {
   $("#lb-in").innerHTML = (m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline></video>` : `<img src="${m.url}" alt="">`) +
     `<div class="info">${avatar(who)}<span>Subido por <b>${esc(who)}</b> · ${new Date(m.created_at).toLocaleDateString("es")}</span>
      <button class="btn small" id="lb-d">⬇ Descargar</button>
-     ${m.user_id === user.id ? `<button class="btn small ghost" id="lb-del" style="color:#fff;border-color:#fff6">Eliminar</button>` : ""}</div>
+     ${m.user_id === user?.id ? `<button class="btn small ghost" id="lb-del" style="color:#fff;border-color:#fff6">Eliminar</button>` : ""}</div>
      <div class="cm"><div class="cm-list" id="cm-list">Cargando comentarios…</div>
      <div class="cm-new"><input id="cm-in" maxlength="500" placeholder="Escribe un comentario…"><button class="btn small" id="cm-go">Enviar</button></div></div>`;
   $("#lb").classList.add("on");
@@ -344,7 +390,7 @@ async function loadComments(m, i) {
   const { data, error } = await db.from("comments").select("*").eq("media_id", m.id).order("created_at");
   const box = $("#cm-list"); if (cur !== i || !box) return;
   if (error) return box.textContent = error.message;
-  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c))}<div><b>${esc(nameOf(c))}</b> <small>${new Date(c.created_at).toLocaleDateString("es")}</small><br>${esc(c.body)}${c.user_id === user.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
+  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c))}<div><b>${esc(nameOf(c))}</b> <small>${new Date(c.created_at).toLocaleDateString("es")}</small><br>${esc(c.body)}${c.user_id === user?.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
   box.querySelectorAll(".cdel").forEach(a => a.onclick = async e => { e.preventDefault(); await db.from("comments").delete().eq("id", a.dataset.id); loadComments(m, i); });
 }
 async function sendComment(m) {
@@ -384,7 +430,7 @@ function ask(title, ph1, askName) {
 $("#b-alb").onclick = async () => {
   const r = await ask("Nuevo álbum", "Nombre (ej. Viajes, Random)", false); if (!r || !r[0]) return;
   const { error } = await db.from("albums").insert({ name: r[0] });
-  if (error) return alert(error.message);
+  if (error) return alert(error.image); // fallback
   loadAlbums();
 };
 
