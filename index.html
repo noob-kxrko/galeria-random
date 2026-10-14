@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nuestra Galería</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#efece4">
+<link rel="apple-touch-icon" href="icon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root,[data-theme=bosque]{--bg:#efece4;--card:#f8f5ee;--ink:#2f362e;--soft:#6c7467;--accent:#6f8a68;--accent2:#b58d78;--line:#dcd5c5;--on:#fbfaf6;--shadow:0 8px 24px rgba(60,55,35,.10)}
@@ -75,6 +78,18 @@ dialog{border:0;border-radius:30px 14px 30px 14px;background:var(--card);color:v
 dialog::backdrop{background:rgba(0,0,0,.4)}
 .code{font-family:monospace;background:var(--card);border:1px solid var(--line);padding:.15rem .6rem;border-radius:10px;user-select:all}
 .theme{position:fixed;left:.8rem;bottom:calc(.8rem + env(safe-area-inset-bottom));width:auto;z-index:5;padding:.4rem .8rem;border-radius:999px;margin:0;box-shadow:var(--shadow);cursor:pointer}
+.item .by{cursor:pointer;max-width:calc(100% - 52px)}
+.item .fav{position:absolute;right:6px;bottom:6px;width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:1rem}
+.item .fav.on{color:#f2c46d}
+.item .cnt{position:absolute;right:42px;bottom:9px;background:rgba(0,0,0,.55);color:#fff;font-size:.7rem;padding:.1rem .45rem;border-radius:999px}
+.mes{grid-column:1/-1;margin:1.2rem 0 .1rem;font-family:Georgia,serif;font-size:1.35rem;text-transform:capitalize;border-bottom:2px solid var(--line);padding-bottom:.3rem}
+.mes:first-child{margin-top:0}
+.rxs{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin-top:.8rem}
+.rxb{border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:.25rem .7rem;cursor:pointer;font-size:1.05rem}
+.rxb.on{background:rgba(255,255,255,.28);border-color:#fff}
+#lb .who{cursor:pointer;text-decoration:underline dotted}
+.av.big{width:56px;height:56px;font-size:1.4rem}
+#prof p{margin:.8rem 0 .6rem;color:var(--soft)}
 .hide{display:none!important}
 </style>
 </head>
@@ -110,6 +125,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <header>
     <h1>🌿 Galería</h1>
     <div class="hbtns">
+      <button class="btn small ghost" id="b-me">Mi perfil</button>
       <button class="btn small ghost" id="hello" title="Cambiar mi nombre"></button>
       <button class="btn small ghost" id="b-out">Salir</button>
     </div>
@@ -125,9 +141,11 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
         <button class="btn" id="b-up">⬆ Subir fotos o videos</button>
         <button class="btn small ghost" id="b-alb">+ Álbum</button>
         <button class="btn small ghost" id="b-ref">🔄 Actualizar</button>
+        <button class="btn small ghost" id="b-view"></button>
         <input type="file" id="file" accept="image/*,video/*" multiple hidden>
         <span class="msg" id="up-msg"></span>
       </div>
+      <div class="card hide" id="prof" style="margin-bottom:1rem"></div>
       <div class="grid" id="grid"></div>
       <div class="empty hide" id="empty-m">Todavía no hay recuerdos aquí. ¡Sube el primero!</div>
     </div>
@@ -185,10 +203,13 @@ let db;
 try { db = supabase.createClient(URL_, KEY_); } catch (e) { fatal("Error al conectar con Supabase: " + e.message); }
 
 let user = null, albums = [], aid = null, media = [], cur = -1, tok = 0;
-let userNames = {};
+let userNames = {}, favs = new Set(), rx = {}, bios = {}, who = null, onlyFav = false, view = "grid";
+try { view = localStorage.getItem("vista") || "grid"; } catch {}
 const nameOf = m => userNames[m.user_id] || m.author_name || (user && m.user_id === user.id ? myName() : "alguien");
 const myName = () => user?.user_metadata?.name || (user?.email || "").split("@")[0] || "alguien";
 const avatar = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) % 360; return `<span class="av" style="background:hsl(${h} 25% 42%)">${esc((n[0] || "?").toUpperCase())}</span>`; };
+
+const fmt = d => new Date(d).toLocaleString("es", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
 
 /* ---------- Sincronización robusta de sesión (Sin bloqueos en blanco) ---------- */
 async function initApp() {
@@ -210,7 +231,7 @@ function setSessionUser(u) {
   show("#auth", !u);
   show("#app", !!u);
   if (!u) {
-    albums = []; media = []; closeLb();
+    albums = []; media = []; who = null; onlyFav = false; closeLb();
     return;
   }
   $("#hello").textContent = "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️";
@@ -248,9 +269,10 @@ async function loadAlbums() {
   loadMedia();
 }
 function renderAlbums() {
-  $("#albums").innerHTML = `<button class="chip ${!aid ? "on" : ""}" data-id="">Todo</button>` +
-    albums.map(a => `<button class="chip ${a.id === aid ? "on" : ""}" data-id="${a.id}">${esc(a.name)}</button>`).join("");
-  $("#albums").querySelectorAll(".chip").forEach(b => b.onclick = () => { aid = b.dataset.id || null; renderAlbums(); loadMedia(); });
+  const on = c => c ? "on" : "";
+  $("#albums").innerHTML = `<button class="chip ${on(!aid && !onlyFav)}" data-id="">Todo</button><button class="chip ${on(onlyFav)}" data-fav="1">★ Favoritas</button>` +
+    albums.map(a => `<button class="chip ${on(a.id === aid && !onlyFav)}" data-id="${a.id}">${esc(a.name)}</button>`).join("");
+  $("#albums").querySelectorAll(".chip").forEach(b => b.onclick = () => { onlyFav = !!b.dataset.fav; aid = onlyFav ? null : (b.dataset.id || null); renderAlbums(); loadMedia(); });
 }
 
 /* ---------- Medios ---------- */
@@ -290,13 +312,31 @@ async function loadMedia(retryCount = 0) {
     }
   }
   
+  const [f, r, p] = await Promise.all([
+    db.from("favorites").select("media_id").eq("user_id", user.id),
+    db.from("reactions").select("media_id,user_id,emoji"),
+    db.from("profiles").select("id,bio")]);
+  if (my !== tok) return;
+  favs = new Set((f.data || []).map(x => x.media_id)); rx = {};
+  (r.data || []).forEach(x => (rx[x.media_id] ||= []).push(x));
+  bios = Object.fromEntries((p.data || []).map(x => [x.id, x.bio || ""]));
+  if (onlyFav) media = media.filter(m => favs.has(m.id));
+  if (who) media = media.filter(m => m.user_id === who);
+  renderProfile();
   show("#empty-m", !media.length);
-  $("#grid").innerHTML = media.map((m, i) => `
+  let last = "";
+  $("#grid").innerHTML = media.map((m, i) => {
+    const mes = view === "time" ? new Date(m.created_at).toLocaleDateString("es", { month: "long", year: "numeric" }) : "";
+    const h = mes && mes !== last ? (last = mes, `<h3 class="mes">${esc(mes)}</h3>`) : "";
+    const n = (rx[m.id] || []).length, fv = favs.has(m.id);
+    return h + `
     <div class="item" data-i="${i}">
       ${m.kind === "video" ? `<video src="${m.url}#t=0.1" muted playsinline preload="metadata"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" decoding="async" alt="${esc(m.caption)}">`}
-      <span class="by">${avatar(nameOf(m))}${esc(nameOf(m))}</span>
+      <span class="by" data-u="${m.user_id}">${avatar(nameOf(m))}${esc(nameOf(m))}</span>
       <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>
-    </div>`).join("");
+      ${n ? `<span class="cnt">♥ ${n}</span>` : ""}
+      <button class="fav ${fv ? "on" : ""}" data-i="${i}" aria-label="Favorita">${fv ? "★" : "☆"}</button>
+    </div>`; }).join("");
 
   $("#grid").querySelectorAll("img,video").forEach(el => {
     const base = el.getAttribute("src")?.split("#")[0] || "", hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
@@ -307,6 +347,8 @@ async function loadMedia(retryCount = 0) {
   });
   
   $("#grid").querySelectorAll(".item").forEach(el => el.onclick = () => openLb(+el.dataset.i));
+  $("#grid").querySelectorAll(".fav").forEach(b => b.onclick = e => { e.stopPropagation(); toggleFav(media[+b.dataset.i]); });
+  $("#grid").querySelectorAll(".by").forEach(b => b.onclick = e => { e.stopPropagation(); openProfile(b.dataset.u); });
   $("#grid").querySelectorAll(".dl").forEach(b => b.onclick = e => { e.stopPropagation(); download(media[+b.dataset.i]); });
 }
 
@@ -366,14 +408,17 @@ function openLb(i) {
   if (i < 0 || i >= media.length) return;
   cur = i; const m = media[i], who = nameOf(m);
   $("#lb-in").innerHTML = (m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline></video>` : `<img src="${m.url}" alt="">`) +
-    `<div class="info">${avatar(who)}<span>Subido por <b>${esc(who)}</b> · ${new Date(m.created_at).toLocaleDateString("es")}</span>
+    `<div class="info">${avatar(who)}<span>Subido por <b class="who" data-u="${m.user_id}">${esc(who)}</b> · ${fmt(m.created_at)}</span>
      <button class="btn small" id="lb-d">⬇ Descargar</button>
      ${m.user_id === user?.id ? `<button class="btn small ghost" id="lb-del" style="color:#fff;border-color:#fff6">Eliminar</button>` : ""}</div>
+     <div class="rxs" id="rxs"></div>
      <div class="cm"><div class="cm-list" id="cm-list">Cargando comentarios…</div>
      <div class="cm-new"><input id="cm-in" maxlength="500" placeholder="Escribe un comentario…"><button class="btn small" id="cm-go">Enviar</button></div></div>`;
   $("#lb").classList.add("on");
   $("#lb-p").classList.toggle("hide", i === 0); $("#lb-n").classList.toggle("hide", i === media.length - 1);
   $("#lb-d").onclick = () => download(m);
+  renderRx(m);
+  $("#lb-in").querySelector(".who").onclick = () => openProfile(m.user_id);
   $("#cm-go").onclick = () => sendComment(m);
   $("#cm-in").onkeydown = e => { if (e.key === "Enter") sendComment(m); };
   const del = $("#lb-del");
@@ -390,7 +435,7 @@ async function loadComments(m, i) {
   const { data, error } = await db.from("comments").select("*").eq("media_id", m.id).order("created_at");
   const box = $("#cm-list"); if (cur !== i || !box) return;
   if (error) return box.textContent = error.message;
-  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c))}<div><b>${esc(nameOf(c))}</b> <small>${new Date(c.created_at).toLocaleDateString("es")}</small><br>${esc(c.body)}${c.user_id === user?.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
+  box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c))}<div><b>${esc(nameOf(c))}</b> <small>${fmt(c.created_at)}</small><br>${esc(c.body)}${c.user_id === user?.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
   box.querySelectorAll(".cdel").forEach(a => a.onclick = async e => { e.preventDefault(); await db.from("comments").delete().eq("id", a.dataset.id); loadComments(m, i); });
 }
 async function sendComment(m) {
@@ -430,7 +475,7 @@ function ask(title, ph1, askName) {
 $("#b-alb").onclick = async () => {
   const r = await ask("Nuevo álbum", "Nombre (ej. Viajes, Random)", false); if (!r || !r[0]) return;
   const { error } = await db.from("albums").insert({ name: r[0] });
-  if (error) return alert(error.image); // fallback
+  if (error) return alert(error.message);
   loadAlbums();
 };
 
@@ -440,10 +485,68 @@ async function changeName() {
   const { data, error } = await db.auth.updateUser({ data: { name: r[0] } });
   if (error) return alert(error.message);
   user = data.user;
+  await db.rpc("refresh_my_name");
   $("#hello").textContent = "Hola, " + r[0] + " ✏️";
   loadMedia();
 }
 $("#hello").onclick = changeName;
+
+/* ---------- Favoritos ---------- */
+async function toggleFav(m) {
+  const on = favs.has(m.id); on ? favs.delete(m.id) : favs.add(m.id);
+  const b = $(`.fav[data-i="${media.indexOf(m)}"]`);
+  if (b) { b.textContent = on ? "☆" : "★"; b.classList.toggle("on", !on); }
+  const r = on ? await db.from("favorites").delete().match({ media_id: m.id, user_id: user.id }) : await db.from("favorites").insert({ media_id: m.id });
+  if (r.error) { alert(r.error.message); loadMedia(); }
+}
+
+/* ---------- Reacciones ---------- */
+const EMO = ["❤️", "😂", "😮", "🔥", "🥹"];
+function renderRx(m) {
+  const l = rx[m.id] || [];
+  $("#rxs").innerHTML = EMO.map(e => {
+    const n = l.filter(x => x.emoji === e).length, mine = l.some(x => x.emoji === e && x.user_id === user.id);
+    return `<button class="rxb ${mine ? "on" : ""}" data-e="${e}">${e}${n ? ` <small>${n}</small>` : ""}</button>`;
+  }).join("") + `<button class="rxb ${favs.has(m.id) ? "on" : ""}" id="lb-f" aria-label="Favorita">${favs.has(m.id) ? "★" : "☆"}</button>`;
+  $("#rxs").querySelectorAll("[data-e]").forEach(b => b.onclick = () => react(m, b.dataset.e));
+  $("#lb-f").onclick = async () => { await toggleFav(m); renderRx(m); };
+}
+async function react(m, e) {
+  const l = rx[m.id] || (rx[m.id] = []), k = l.findIndex(x => x.emoji === e && x.user_id === user.id);
+  let r;
+  if (k >= 0) { l.splice(k, 1); renderRx(m); r = await db.from("reactions").delete().match({ media_id: m.id, user_id: user.id, emoji: e }); }
+  else { l.push({ media_id: m.id, user_id: user.id, emoji: e }); renderRx(m); r = await db.from("reactions").insert({ media_id: m.id, emoji: e }); }
+  if (r.error) alert(r.error.message);
+}
+
+/* ---------- Perfiles ---------- */
+function openProfile(uid) { who = uid; closeLb(); loadMedia(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+function renderProfile() {
+  const p = $("#prof"); if (!who) return p.classList.add("hide");
+  const mine = who === user.id, n = userNames[who] || (mine ? myName() : "alguien");
+  p.classList.remove("hide");
+  p.innerHTML = `<div style="display:flex;gap:1rem;align-items:center">${avatar(n).replace('class="av"', 'class="av big"')}
+    <div style="flex:1"><h2>${esc(n)}</h2><span style="color:var(--soft)">${media.length} recuerdos en esta vista</span></div>
+    <button class="btn small ghost" id="p-x">✕ Ver todos</button></div>
+    <p>${esc(bios[who] || (mine ? "Cuéntales algo sobre ti." : "Sin bio todavía."))}</p>
+    ${mine ? `<button class="btn small" id="p-e">Editar bio</button>` : ""}`;
+  $("#p-x").onclick = () => { who = null; loadMedia(); };
+  if (mine) $("#p-e").onclick = async () => {
+    const r = await ask("Tu bio", "Algo sobre ti (máx. 160)", false); if (!r || !r[0]) return;
+    const { error } = await db.from("profiles").upsert({ id: user.id, bio: r[0].slice(0, 160) });
+    if (error) return alert(error.message);
+    bios[user.id] = r[0].slice(0, 160); renderProfile();
+  };
+}
+$("#b-me").onclick = () => openProfile(user.id);
+
+/* ---------- Línea de tiempo ---------- */
+const setView = () => $("#b-view").textContent = view === "time" ? "▦ Cuadrícula" : "🕒 Línea de tiempo";
+$("#b-view").onclick = () => { view = view === "time" ? "grid" : "time"; try { localStorage.setItem("vista", view); } catch {} setView(); loadMedia(); };
+setView();
+
+/* ---------- PWA ---------- */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
 </html>
