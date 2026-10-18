@@ -10,11 +10,25 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-:root,[data-theme=bosque]{--bg:#efece4;--card:#f8f5ee;--ink:#2f362e;--soft:#6c7467;--accent:#6f8a68;--accent2:#b58d78;--line:#dcd5c5;--on:#fbfaf6;--shadow:0 8px 24px rgba(60,55,35,.10)}
-[data-theme=atardecer]{--bg:#f1e9e2;--card:#f9f4ee;--ink:#43302b;--soft:#85706a;--accent:#b08069;--accent2:#a37b88;--line:#e2d4c8}
-[data-theme=oceano]{--bg:#e8eeef;--card:#f5f8f8;--ink:#25383d;--soft:#66808a;--accent:#678c98;--accent2:#b09a7c;--line:#d2dee1}
-[data-theme=lavanda]{--bg:#ece9f0;--card:#f7f5f9;--ink:#342f3f;--soft:#776f86;--accent:#8a7ea3;--accent2:#b28f9e;--line:#dbd5e4}
-[data-theme=noche]{--bg:#1a1e1a;--card:#232823;--ink:#e4e8df;--soft:#9aa594;--accent:#86a47f;--accent2:#c49a82;--line:#333b32;--on:#101510;--shadow:0 8px 24px rgba(0,0,0,.4)}
+/* Editorial Minimal (por defecto, claro) */
+:root,[data-theme=editorial]{--bg:#f4f1ea;--card:#ffffff;--ink:#1c1917;--soft:#78716c;--accent:#c2410c;--accent2:#991b1b;--line:#e7e2d6;--on:#ffffff;--shadow:0 1px 3px rgba(28,25,23,.12)}
+/* Noche: el gemelo oscuro del Editorial (papel y tinta, de noche) */
+[data-theme=noche]{--bg:#1c1917;--card:#292524;--ink:#f4f1ea;--soft:#a8a29e;--accent:#e2703f;--accent2:#c98b6b;--line:#3a3430;--on:#1a0f09;--shadow:0 8px 24px rgba(0,0,0,.4)}
+/* Cyber-Noir */
+[data-theme=cyber]{--bg:#09090b;--card:#18181b;--ink:#e4e4e7;--soft:#a1a1aa;--accent:#10b981;--accent2:#06b6d4;--line:#27272a;--on:#04130d;--shadow:0 8px 24px rgba(0,0,0,.5)}
+/* Obsidian & Copper */
+[data-theme=obsidiana]{--bg:#121212;--card:#1e1e1e;--ink:#f5f5f7;--soft:#a3a3a8;--accent:#b87333;--accent2:#d4af37;--line:#2a2a2a;--on:#140e08;--shadow:0 8px 24px rgba(0,0,0,.5)}
+/* Neo-Brutalist */
+[data-theme=brutal]{--bg:#fef08a;--card:#ffffff;--ink:#000000;--soft:#404040;--accent:#3b82f6;--accent2:#ec4899;--line:#000000;--on:#000000;--shadow:4px 4px 0 #000}
+/* Deep Abyss */
+[data-theme=abismo]{--bg:#030712;--card:#0f172a;--ink:#bae6fd;--soft:#7aa7c7;--accent:#38bdf8;--accent2:#a855f7;--line:#1e293b;--on:#04121c;--shadow:0 8px 24px rgba(0,0,0,.55)}
+[data-theme=editorial] .card,[data-theme=noche] .card,[data-theme=cyber] .card,[data-theme=obsidiana] .card,[data-theme=abismo] .card{border:1px solid var(--line)}
+[data-theme=cyber] body,[data-theme=cyber] h1,[data-theme=cyber] h2{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+[data-theme=abismo] .card{background:rgba(15,23,42,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+[data-theme=brutal] .blob{display:none}
+[data-theme=brutal] body{font-weight:600}
+[data-theme=brutal] h1,[data-theme=brutal] h2{font-family:"Arial Black",Impact,system-ui,sans-serif;font-weight:900}
+[data-theme=brutal] .card,[data-theme=brutal] .btn,[data-theme=brutal] .chip,[data-theme=brutal] .item{border:2px solid #000;border-radius:0}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;
@@ -220,14 +234,15 @@ const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&l
 const show = (id, on) => $(id).classList.toggle("hide", !on);
 
 /* ---------- Tema ---------- */
-const THEMES = { auto:"🎨 Automático", bosque:"🌿 Bosque", atardecer:"🌅 Atardecer", oceano:"🌊 Océano", lavanda:"💜 Lavanda", noche:"🌙 Noche" };
+const THEMES = { auto:"🎨 Automático", editorial:"📰 Editorial Minimal", noche:"🌙 Noche", cyber:"🟩 Cyber-Noir", obsidiana:"🪙 Obsidian & Copper", abismo:"🌊 Deep Abyss", brutal:"🟨 Neo-Brutalist" };
 const mq = matchMedia("(prefers-color-scheme: dark)");
 $("#theme").innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
 function applyTheme() {
   let t = "auto"; try { t = localStorage.getItem("tema") || "auto"; } catch {}
   if (!THEMES[t]) t = "auto";
-  document.documentElement.dataset.theme = t === "auto" ? (mq.matches ? "noche" : "bosque") : t;
+  document.documentElement.dataset.theme = t === "auto" ? (mq.matches ? "noche" : "editorial") : t;
   $("#theme").value = t;
+  document.querySelector('meta[name=theme-color]').content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
 }
 $("#theme").onchange = e => { try { localStorage.setItem("tema", e.target.value); } catch {} applyTheme(); };
 mq.addEventListener("change", applyTheme);
