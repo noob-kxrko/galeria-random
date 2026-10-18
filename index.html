@@ -7,28 +7,33 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#efece4">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-/* Editorial Minimal (por defecto, claro) */
-:root,[data-theme=editorial]{--bg:#f4f1ea;--card:#ffffff;--ink:#1c1917;--soft:#78716c;--accent:#c2410c;--accent2:#991b1b;--line:#e7e2d6;--on:#ffffff;--shadow:0 1px 3px rgba(28,25,23,.12)}
-/* Noche: el gemelo oscuro del Editorial (papel y tinta, de noche) */
-[data-theme=noche]{--bg:#1c1917;--card:#292524;--ink:#f4f1ea;--soft:#a8a29e;--accent:#e2703f;--accent2:#c98b6b;--line:#3a3430;--on:#1a0f09;--shadow:0 8px 24px rgba(0,0,0,.4)}
-/* Cyber-Noir */
-[data-theme=cyber]{--bg:#09090b;--card:#18181b;--ink:#e4e4e7;--soft:#a1a1aa;--accent:#10b981;--accent2:#06b6d4;--line:#27272a;--on:#04130d;--shadow:0 8px 24px rgba(0,0,0,.5)}
-/* Obsidian & Copper */
-[data-theme=obsidiana]{--bg:#121212;--card:#1e1e1e;--ink:#f5f5f7;--soft:#a3a3a8;--accent:#b87333;--accent2:#d4af37;--line:#2a2a2a;--on:#140e08;--shadow:0 8px 24px rgba(0,0,0,.5)}
-/* Neo-Brutalist */
-[data-theme=brutal]{--bg:#fef08a;--card:#ffffff;--ink:#000000;--soft:#404040;--accent:#3b82f6;--accent2:#ec4899;--line:#000000;--on:#000000;--shadow:4px 4px 0 #000}
-/* Deep Abyss */
-[data-theme=abismo]{--bg:#030712;--card:#0f172a;--ink:#bae6fd;--soft:#7aa7c7;--accent:#38bdf8;--accent2:#a855f7;--line:#1e293b;--on:#04121c;--shadow:0 8px 24px rgba(0,0,0,.55)}
-[data-theme=editorial] .card,[data-theme=noche] .card,[data-theme=cyber] .card,[data-theme=obsidiana] .card,[data-theme=abismo] .card{border:1px solid var(--line)}
-[data-theme=cyber] body,[data-theme=cyber] h1,[data-theme=cyber] h2{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
-[data-theme=abismo] .card{background:rgba(15,23,42,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-[data-theme=brutal] .blob{display:none}
-[data-theme=brutal] body{font-weight:600}
-[data-theme=brutal] h1,[data-theme=brutal] h2{font-family:"Arial Black",Impact,system-ui,sans-serif;font-weight:900}
-[data-theme=brutal] .card,[data-theme=brutal] .btn,[data-theme=brutal] .chip,[data-theme=brutal] .item{border:2px solid #000;border-radius:0}
+/* ===== Temas con color de verdad: fondo en degradado, brillo, botones y títulos con color ===== */
+/* Caribe (claro, por defecto) */
+:root,[data-theme=caribe]{--bg:#e9fbf7;--card:#ffffff;--ink:#07373c;--soft:#4b7d82;--accent:#00897b;--accent2:#ff7043;--line:#b9e8e1;--on:#ffffff;--shadow:0 8px 24px rgba(0,137,123,.15);--bgfx:linear-gradient(170deg,#b6f2ea 0%,#e9fbf7 42%,#fff1cf 100%);--btnbg:linear-gradient(135deg,#00a896,#00796b);--blob:.4}
+/* Sakura (claro) */
+[data-theme=sakura]{--bg:#fff1f5;--card:#fffafc;--ink:#4a1230;--soft:#8f5a73;--accent:#d6336c;--accent2:#9c5bd9;--line:#f6cfdc;--on:#ffffff;--shadow:0 8px 24px rgba(214,51,108,.14);--bgfx:linear-gradient(160deg,#ffd0e1 0%,#fff1f5 45%,#e9dcff 100%);--btnbg:linear-gradient(135deg,#ff5c93,#d6336c);--blob:.4}
+/* Aurora */
+[data-theme=aurora]{--bg:#06101e;--card:#0d1b30;--glass:rgba(13,27,48,.6);--ink:#e6fff5;--soft:#8fb7ae;--accent:#2dd4a7;--accent2:#a78bfa;--line:#1c3a4d;--cardbd:rgba(45,212,167,.28);--on:#03140f;--shadow:0 10px 34px rgba(45,212,167,.14);--bgfx:radial-gradient(60% 45% at 12% 8%,rgba(45,212,167,.38),transparent 70%),radial-gradient(50% 40% at 92% 18%,rgba(167,139,250,.38),transparent 70%),radial-gradient(70% 45% at 50% 105%,rgba(56,189,248,.28),transparent 70%),#06101e;--btnbg:linear-gradient(135deg,#2dd4a7,#38bdf8);--h1bg:linear-gradient(90deg,#6ee7b7,#a78bfa);--h1c:transparent;--blob:.15}
+/* Sunset */
+[data-theme=sunset]{--bg:#2a0d3e;--card:#3a1450;--glass:rgba(40,12,55,.55);--ink:#fff1e6;--soft:#e2b9c8;--accent:#ffb347;--accent2:#ff5c8a;--line:#6a2a6e;--cardbd:rgba(255,179,71,.35);--on:#2a0d1a;--shadow:0 10px 34px rgba(255,92,138,.25);--bgfx:linear-gradient(165deg,#2a0d5e 0%,#8e1f6b 50%,#ff7a45 105%);--btnbg:linear-gradient(135deg,#ffcf5a,#ff7a45);--h1bg:linear-gradient(90deg,#ffe08a,#ff8fb1);--h1c:transparent;--blob:.2}
+/* Synthwave */
+[data-theme=synth]{--bg:#0e0626;--card:#1a0b3d;--glass:rgba(26,11,61,.6);--ink:#f6e9ff;--soft:#b79ae0;--accent:#22d3ee;--accent2:#ff2e93;--line:#3b1b7a;--cardbd:rgba(255,46,147,.55);--on:#041418;--shadow:0 0 28px rgba(255,46,147,.28);--bgfx:linear-gradient(180deg,#12062f 0%,#2a0a5c 55%,#8a1d82 100%);--btnbg:linear-gradient(135deg,#22d3ee,#ff2e93);--h1bg:linear-gradient(90deg,#22d3ee,#ff2e93);--h1c:transparent;--blob:.25}
+/* Oro Negro */
+[data-theme=oro]{--bg:#0a0907;--card:#16130e;--glass:rgba(22,19,14,.7);--ink:#f7efdc;--soft:#b3a587;--accent:#f2c14e;--accent2:#c8963e;--line:#2e2718;--cardbd:rgba(242,193,78,.3);--on:#1a1204;--shadow:0 10px 30px rgba(242,193,78,.12);--bgfx:radial-gradient(70% 50% at 50% -10%,rgba(242,193,78,.3),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(200,150,62,.18),transparent 70%),#0a0907;--btnbg:linear-gradient(135deg,#f8d775,#c8963e);--h1bg:linear-gradient(90deg,#fff0b8,#f2c14e,#c8963e);--h1c:transparent;--blob:.1}
+/* Noche (el gemelo oscuro del modo automático) */
+[data-theme=noche]{--bg:#0b1020;--card:#121a33;--glass:rgba(18,26,51,.6);--ink:#e6ecff;--soft:#93a0c8;--accent:#7c9cff;--accent2:#c084fc;--line:#222d52;--cardbd:rgba(124,156,255,.25);--on:#050a1c;--shadow:0 10px 30px rgba(0,0,0,.45);--bgfx:radial-gradient(60% 45% at 10% 0%,rgba(124,156,255,.25),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(192,132,252,.2),transparent 70%),#0b1020;--btnbg:linear-gradient(135deg,#7c9cff,#c084fc);--blob:.12}
+/* Reglas comunes: usan las variables de cada tema */
+html[data-theme] body{background:var(--bgfx,var(--bg));background-attachment:fixed}
+html[data-theme] .card{background:var(--glass,var(--card));border:1px solid var(--cardbd,var(--line));-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+html[data-theme] .btn:not(.ghost){background:var(--btnbg,var(--accent))}
+html[data-theme] h1{background:var(--h1bg,none);-webkit-background-clip:text;background-clip:text;color:var(--h1c,inherit)}
+html[data-theme] .blob{opacity:var(--blob,.2)}
+.sws{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
+.sw{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.sw.on{outline:3px solid var(--accent);outline-offset:2px}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;
@@ -110,6 +115,9 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 @media(min-width:700px){.sk{height:240px}}
 @media(prefers-reduced-motion:reduce){.sk{animation:none}.item img{transition:none}}
 .av{overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}
+.av{flex:none}.item .av img{width:100%;height:100%;opacity:1;transition:none;background:none}
+#lb .av img{width:100%;height:100%;max-height:none;border-radius:50%}
+.item .by .av{width:24px;height:24px}
 #drawer{position:fixed;inset:0;z-index:30}
 #drawer .scrim{position:absolute;inset:0;background:rgba(0,0,0,.4)}
 #drawer aside{position:absolute;top:0;right:0;bottom:0;width:min(340px,88vw);background:var(--card);color:var(--ink);padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));overflow-y:auto;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.7rem;animation:dr .22s ease}
@@ -121,9 +129,13 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 .avbtn::after{content:"📷";position:absolute;right:-4px;bottom:-4px;background:var(--card);border-radius:50%;font-size:.8rem;padding:2px}
 #drawer .dl2{font-size:.8rem;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;margin-top:.4rem}
 #drawer aside .btn{width:100%;text-align:left}
-.lk{position:fixed;inset:0;z-index:60;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;gap:1rem;align-items:center;justify-content:center;text-align:center;padding:2rem}
 .upbar{width:100%;height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:.5rem}
 .upbar i{display:block;height:100%;width:0;background:var(--accent,#6f8a68);transition:width .3s}
+.cap{margin:.6rem 0;color:#fff;text-align:center}.cap a{color:#fff;opacity:.8;margin-left:.4rem;font-size:.9rem}
+#drawer .dh .btn,#d-hello .btn,#drawer .dp .btn{width:auto}
+#d-nav{display:flex;flex-direction:column;gap:.5rem}
+@media(max-width:600px){#lb .nav{top:auto;bottom:.8rem;transform:none;opacity:.9;z-index:2}#lb .in{padding-bottom:3.5rem}}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .hide{display:none!important}
 </style>
 </head>
@@ -139,11 +151,11 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <button class="btn small ghost hide" id="d-avdel">Quitar foto de perfil</button>
   <div id="d-nav"><button class="btn ghost" id="d-fav">★ Favoritas</button></div>
   <div class="dl2">Tema</div><div id="d-theme"></div>
-  <div class="dl2">Seguridad</div><button class="btn ghost" id="d-lock"></button>
+  <div class="dl2">Subidas y borrados</div>
+  <label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" id="d-orig"> Subir en calidad original</label>
+  <button class="btn ghost" id="d-trash">🗑 Papelera</button>
   <div id="d-out"></div>
 </aside></div>
-<div id="lock" class="lk hide"><div style="font-size:3rem">🔒</div><h2>Galería bloqueada</h2><p class="msg" id="lk-msg"></p>
-  <button class="btn" id="lk-go">Desbloquear</button><button class="btn small ghost" id="lk-out">Salir</button></div>
 
 <div id="setup" class="center hide"><div class="card">
   <h2>Falta conectar Supabase</h2>
@@ -234,13 +246,13 @@ const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&l
 const show = (id, on) => $(id).classList.toggle("hide", !on);
 
 /* ---------- Tema ---------- */
-const THEMES = { auto:"🎨 Automático", editorial:"📰 Editorial Minimal", noche:"🌙 Noche", cyber:"🟩 Cyber-Noir", obsidiana:"🪙 Obsidian & Copper", abismo:"🌊 Deep Abyss", brutal:"🟨 Neo-Brutalist" };
+const THEMES = { auto:"🎨 Automático", caribe:"🏝️ Caribe", sakura:"🌸 Sakura", aurora:"🌌 Aurora", sunset:"🌅 Sunset", synth:"🌆 Synthwave", oro:"✨ Oro Negro", noche:"🌙 Noche" };
 const mq = matchMedia("(prefers-color-scheme: dark)");
 $("#theme").innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
 function applyTheme() {
   let t = "auto"; try { t = localStorage.getItem("tema") || "auto"; } catch {}
   if (!THEMES[t]) t = "auto";
-  document.documentElement.dataset.theme = t === "auto" ? (mq.matches ? "noche" : "editorial") : t;
+  document.documentElement.dataset.theme = t === "auto" ? (mq.matches ? "noche" : "caribe") : t;
   $("#theme").value = t;
   document.querySelector('meta[name=theme-color]').content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
 }
@@ -257,7 +269,7 @@ let db;
 try { db = supabase.createClient(URL_, KEY_); } catch (e) { fatal("Error al conectar con Supabase: " + e.message); }
 
 let user = null, albums = [], aid = null, media = [], cur = -1, tok = 0;
-let userNames = {}, favs = new Set(), rx = {}, bios = {}, who = null, onlyFav = false, view = "grid", lastLoad = 0, uploading = false, avImg = {}, avPath = {}, unlocked = false, hiddenAt = 0;
+let userNames = {}, favs = new Set(), rx = {}, bios = {}, who = null, onlyFav = false, view = "grid", lastLoad = 0, uploading = false, avImg = {}, avPath = {}, trashMode = false, hasTrash = true, purged = false, favDirty = false, rt = null, rtT = 0;
 try { view = localStorage.getItem("vista") || "grid"; } catch {}
 const nameOf = m => userNames[m.user_id] || m.author_name || (user && m.user_id === user.id ? myName() : "alguien");
 const myName = () => user?.user_metadata?.name || (user?.email || "").split("@")[0] || "alguien";
@@ -265,6 +277,10 @@ const avatar = (n, uid) => { if (avImg[uid]) return `<span class="av"><img src="
 
 const fmt = d => new Date(d).toLocaleString("es", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
 
+function errEs(e) {
+  const m = String(e?.message || e || ""), T = [[/invalid login/i, "Correo o contraseña incorrectos."], [/not confirmed/i, "Primero confirma tu correo."], [/already registered/i, "Ese correo ya tiene cuenta."], [/database error saving new user/i, "Este correo no está autorizado para esta galería."], [/at least 6|weak/i, "La contraseña debe tener al menos 6 caracteres."], [/rate limit|too many/i, "Demasiados intentos. Espera un momento."], [/failed to fetch|network/i, "Sin conexión. Revisa tu internet."], [/row-level security|permission|not allowed/i, "No tienes permiso para hacer eso."], [/too large|exceeded/i, "El archivo es demasiado grande."]];
+  return (T.find(([r]) => r.test(m)) || [0, m])[1];
+}
 const lazyIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.src = e.target.dataset.src; lazyIO.unobserve(e.target); } }), { rootMargin: "400px" });
 
 /* ---------- Sincronización robusta de sesión (Sin bloqueos en blanco) ---------- */
@@ -287,13 +303,13 @@ function setSessionUser(u) {
   show("#auth", !u);
   show("#app", !!u);
   if (!u) {
-    albums = []; media = []; who = null; onlyFav = false; unlocked = false; avImg = {}; avPath = {}; show("#drawer", false); show("#lock", false); closeLb();
+    albums = []; media = []; who = null; onlyFav = false; avImg = {}; avPath = {}; trashMode = false; if (rt) { try { db.removeChannel(rt); } catch {} rt = null; } show("#drawer", false); closeLb();
     return;
   }
   $("#hello").textContent = "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️";
-  checkLock(); renderMenu();
+  renderMenu();
   if (changed) {
-    loadAlbums();
+    loadAlbums(); startRT();
     if (!u.user_metadata?.name) setTimeout(changeName, 600);
   }
 }
@@ -310,7 +326,7 @@ async function auth(kind) {
   const { data, error } = kind === "up"
     ? await db.auth.signUp({ email, password, options: { data: { name } } })
     : await db.auth.signInWithPassword({ email, password });
-  if (error) return msg.textContent = error.message;
+  if (error) return msg.textContent = errEs(error);
   try { if (window.PasswordCredential) await navigator.credentials.store(new PasswordCredential({ id: email, password, name: email })); } catch {}
   if (kind === "up" && !data.session) msg.textContent = "Cuenta creada. Revisa tu correo para confirmarla y luego entra.";
 }
@@ -321,17 +337,22 @@ $("#b-out").onclick = () => db.auth.signOut();
 
 /* ---------- Álbumes ---------- */
 async function loadAlbums() {
-  aid = null;
+  const keep = aid;
   const { data } = await db.from("albums").select("*").order("created_at");
   albums = data || [];
+  aid = albums.some(a => a.id === keep) ? keep : null;
   renderAlbums(); 
   loadMedia();
 }
 function renderAlbums() {
-  const on = c => c ? "on" : "";
+  const on = c => c ? "on" : "", ca = albums.find(a => a.id === aid);
   $("#albums").innerHTML = `<button class="chip ${on(!aid && !onlyFav)}" data-id="">Todo</button><button class="chip ${on(onlyFav)}" data-fav="1">★ Favoritas</button>` +
-    albums.map(a => `<button class="chip ${on(a.id === aid && !onlyFav)}" data-id="${a.id}">${esc(a.name)}</button>`).join("");
-  $("#albums").querySelectorAll(".chip").forEach(b => b.onclick = () => { onlyFav = !!b.dataset.fav; aid = onlyFav ? null : (b.dataset.id || null); renderAlbums(); loadMedia(); });
+    albums.map(a => `<button class="chip ${on(a.id === aid && !onlyFav)}" data-id="${a.id}">${esc(a.name)}</button>`).join("") +
+    (ca && !onlyFav && ca.user_id === user?.id ? `<button class="chip" id="al-r">✏️ Renombrar</button><button class="chip" id="al-d">🗑 Borrar álbum</button>` : "");
+  $("#albums").querySelectorAll(".chip[data-id],.chip[data-fav]").forEach(b => b.onclick = () => { onlyFav = !!b.dataset.fav; aid = onlyFav ? null : (b.dataset.id || null); who = null; trashMode = false; renderAlbums(); loadMedia(); });
+  const r = $("#al-r"), d = $("#al-d");
+  if (r) r.onclick = async () => { const x = await ask("Renombrar álbum", "Nombre", false, ca.name); if (!x) return; const { error } = await db.from("albums").update({ name: x[0] }).eq("id", aid); if (error) return alert(errEs(error)); loadAlbums(); };
+  if (d) d.onclick = async () => { if (!confirm("¿Borrar el álbum «" + ca.name + "»? Las fotos no se borran, pasan a «Todo».")) return; const { error } = await db.from("albums").delete().eq("id", aid); if (error) return alert(errEs(error)); aid = null; loadAlbums(); };
 }
 
 /* ---------- Medios ---------- */
@@ -345,6 +366,7 @@ async function loadMedia(retryCount = 0) {
   const my = ++tok;
   if (!$("#grid").children.length) $("#grid").innerHTML = '<div class="sk"></div>'.repeat(8);
   let q = db.from("media").select("*").order("created_at", { ascending: false });
+  if (hasTrash) q = trashMode ? q.eq("user_id", user.id).not("deleted_at", "is", null) : q.is("deleted_at", null);
   if (aid) q = q.eq("album_id", aid);
   const [, { data, error }, f, r, p] = await Promise.all([
     loadNames(), q,
@@ -354,7 +376,8 @@ async function loadMedia(retryCount = 0) {
   if (my !== tok) return;
   
   if (error) {
-    $("#up-msg").textContent = error.message;
+    if (hasTrash && /deleted_at/i.test(errEs(error))) { hasTrash = false; trashMode = false; return loadMedia(retryCount); }
+    $("#up-msg").textContent = errEs(error);
     if ($("#grid").querySelector(".sk")) $("#grid").innerHTML = "";
     return;
   }
@@ -373,10 +396,12 @@ async function loadMedia(retryCount = 0) {
     if (!e2 && urls) {
       const map = Object.fromEntries(urls.map(u => [u.path, u.signedUrl]));
       media.forEach(m => m.url = map[m.path]);
+      const gone = media.filter(m => !m.url), mine = gone.filter(m => m.user_id === user.id); media = media.filter(m => m.url);
+      if (gone.length) { $("#up-msg").innerHTML = `${gone.length} registro(s) sin archivo ocultos.` + (mine.length ? ` <a href="#" id="clean">Borrar los ${mine.length} míos</a>` : ""); const c = $("#clean"); if (c) c.onclick = async ev => { ev.preventDefault(); await db.from("media").delete().in("id", mine.map(x => x.id)); $("#up-msg").textContent = ""; loadMedia(); }; }
     }
   }
   
-  lastLoad = Date.now();
+  lastLoad = Date.now(); purgeOld();
   favs = new Set((f.data || []).map(x => x.media_id)); rx = {};
   (r.data || []).forEach(x => (rx[x.media_id] ||= []).push(x));
   let prof = p.data; if (p.error) prof = (await db.from("profiles").select("id,bio")).data;
@@ -386,33 +411,9 @@ async function loadMedia(retryCount = 0) {
   if (who) media = media.filter(m => m.user_id === who);
   renderProfile();
   show("#empty-m", !media.length);
-  let last = "";
-  $("#grid").innerHTML = media.map((m, i) => {
-    const mes = view === "time" ? new Date(m.created_at).toLocaleDateString("es", { month: "long", year: "numeric" }) : "";
-    const h = mes && mes !== last ? (last = mes, `<h3 class="mes">${esc(mes)}</h3>`) : "";
-    const n = (rx[m.id] || []).length, fv = favs.has(m.id);
-    return h + `
-    <div class="item" data-i="${i}">
-      ${m.kind === "video" ? `<video data-src="${m.url}#t=0.1" muted playsinline preload="none"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" decoding="async" onload="this.classList.add('ok')" alt="${esc(m.caption)}">`}
-      <span class="by" data-u="${m.user_id}">${avatar(nameOf(m), m.user_id)}${esc(nameOf(m))}</span>
-      <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>
-      ${n ? `<span class="cnt">♥ ${n}</span>` : ""}
-      <button class="fav ${fv ? "on" : ""}" data-i="${i}" aria-label="Favorita">${fv ? "★" : "☆"}</button>
-    </div>`; }).join("");
-
-  $("#grid").querySelectorAll("img,video").forEach(el => {
-    const base = (el.dataset.src || el.getAttribute("src") || "").split("#")[0], hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
-    el.addEventListener("error", () => {
-      const n = +(el.dataset.t || 0);
-      if (n < 3) { el.dataset.t = n + 1; setTimeout(() => { el.src = base + "&r=" + (n + 1) + hash; }, 700 * (n + 1)); }
-    });
-  });
-  
-  $("#grid").querySelectorAll("video[data-src]").forEach(v => lazyIO.observe(v));
-  $("#grid").querySelectorAll(".item").forEach(el => el.onclick = () => openLb(+el.dataset.i));
-  $("#grid").querySelectorAll(".fav").forEach(b => b.onclick = e => { e.stopPropagation(); toggleFav(media[+b.dataset.i]); });
-  $("#grid").querySelectorAll(".by").forEach(b => b.onclick = e => { e.stopPropagation(); openProfile(b.dataset.u); });
-  $("#grid").querySelectorAll(".dl").forEach(b => b.onclick = e => { e.stopPropagation(); download(media[+b.dataset.i]); });
+  window._pg = { last: "", n: 0 };
+  $("#grid").innerHTML = "";
+  more();
 }
 
 document.addEventListener("visibilitychange", () => { if (!document.hidden && user && cur < 0 && !uploading && Date.now() - lastLoad > 60000) loadMedia(); });
@@ -422,7 +423,7 @@ $("#b-ref").onclick = () => { $("#up-msg").textContent = ""; loadAlbums(); };
 const MAX_MB = 50;
 window.addEventListener("beforeunload", e => { if (uploading) { e.preventDefault(); e.returnValue = ""; } });
 async function uploadOne(f0, album) {
-  const f = await shrink(f0);
+  const f = localStorage.getItem("orig") === "1" ? f0 : await shrink(f0);
   if (f.size > MAX_MB * 1048576) throw new Error(`pesa más de ${MAX_MB} MB`);
   const ext = (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   let path, err;
@@ -434,7 +435,7 @@ async function uploadOne(f0, album) {
   }
   if (err) throw err;
   const kind = f.type.startsWith("video") || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name) ? "video" : "image";
-  const ins = await db.from("media").insert({ album_id: album, path, kind, caption: f0.name, author_name: myName() });
+  const ins = await db.from("media").insert({ album_id: album, path, kind, caption: "", author_name: myName() });
   if (ins.error) { await db.storage.from(BUCKET).remove([path]); throw ins.error; }
 }
 $("#file").onchange = async e => {
@@ -443,10 +444,11 @@ $("#file").onchange = async e => {
   btn.disabled = true; uploading = true; bar.classList.remove("hide");
   const tick = () => { $("#up-msg").textContent = `Subiendo ${done} de ${files.length}…`; bar.firstElementChild.style.width = (done / files.length * 100) + "%"; };
   tick();
-  const worker = async () => { while (next < files.length) { const f = files[next++]; try { await uploadOne(f, album); ok++; } catch (er) { fails.push(`${f.name}: ${er.message}`); } done++; tick(); } };
+  const worker = async () => { while (next < files.length) { const f = files[next++]; try { await uploadOne(f, album); ok++; } catch (er) { fails.push(`${f.name}: ${errEs(er)}`); } done++; tick(); } };
   await Promise.all(Array.from({ length: Math.min(3, files.length) }, worker));
   btn.disabled = false; uploading = false; e.target.value = ""; bar.classList.add("hide");
-  $("#up-msg").textContent = fails.length ? `Se subieron ${ok} de ${files.length}. Falló: ${fails.join(" · ")}` : "¡Listo! 🌼";
+  const odd = files.filter(f => /\.(mov|heic|heif)$/i.test(f.name)).length;
+  $("#up-msg").textContent = (fails.length ? `Se subieron ${ok} de ${files.length}. Falló: ${fails.join(" · ")}` : "¡Listo! 🌼") + (odd ? ` ⚠️ ${odd} archivo(s) .mov/HEIC pueden no verse en todos los dispositivos.` : "");
   loadMedia();
 };
 
@@ -472,7 +474,7 @@ async function download(m) {
   const ext = m.path.split(".").pop();
   const name = (m.caption || `recuerdo.${ext}`).replace(/[\\/:*?"<>|]/g, "_");
   const { data, error } = await db.storage.from(BUCKET).createSignedUrl(m.path, 120, { download: name });
-  if (error) return alert(error.message);
+  if (error) return alert(errEs(error));
   const a = document.createElement("a");
   a.href = data.signedUrl; a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
@@ -481,16 +483,18 @@ async function download(m) {
 function openLb(i) {
   if (i < 0 || i >= media.length) return;
   cur = i; const m = media[i], who = nameOf(m);
-  $("#lb-in").innerHTML = (m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline></video>` : `<img src="${m.url}" alt="">`) +
+  $("#lb-in").innerHTML = (m.kind === "video" ? `<video src="${m.url}" controls autoplay muted playsinline></video>` : `<img src="${m.url}" alt="${esc(capL(m))}">`) +
     `<div class="info">${avatar(who, m.user_id)}<span>Subido por <b class="who" data-u="${m.user_id}">${esc(who)}</b> · ${fmt(m.created_at)}</span>
      <button class="btn small" id="lb-d">⬇ Descargar</button>
      ${m.user_id === user?.id ? `<button class="btn small ghost" id="lb-del" style="color:#fff;border-color:#fff6">Eliminar</button>` : ""}</div>
+     <div class="cap" id="cap"></div>
      <div class="rxs" id="rxs"></div>
      <div class="cm"><div class="cm-list" id="cm-list">Cargando comentarios…</div>
      <div class="cm-new"><input id="cm-in" maxlength="500" placeholder="Escribe un comentario…"><button class="btn small" id="cm-go">Enviar</button></div></div>`;
   $("#lb").classList.add("on");
   $("#lb-p").classList.toggle("hide", i === 0); $("#lb-n").classList.toggle("hide", i === media.length - 1);
   $("#lb-d").onclick = () => download(m);
+  renderCap(m);
   renderRx(m);
   $("#lb-in").querySelector(".who").onclick = () => openProfile(m.user_id);
   $("#cm-go").onclick = () => sendComment(m);
@@ -498,9 +502,8 @@ function openLb(i) {
   const del = $("#lb-del");
   if (del) del.onclick = async () => {
     if (!confirm("¿Eliminar este recuerdo?")) return;
-    const r = await db.from("media").delete().eq("id", m.id);
-    if (r.error) return alert(r.error.message);
-    await db.storage.from(BUCKET).remove([m.path]);
+    if (hasTrash) { const r = await db.from("media").update({ deleted_at: new Date().toISOString() }).eq("id", m.id); if (r.error) return alert(errEs(r.error)); }
+    else { const r = await db.from("media").delete().eq("id", m.id); if (r.error) return alert(errEs(r.error)); await db.storage.from(BUCKET).remove([m.path]); }
     closeLb(); loadMedia();
   };
   loadComments(m, i);
@@ -508,7 +511,7 @@ function openLb(i) {
 async function loadComments(m, i) {
   const { data, error } = await db.from("comments").select("*").eq("media_id", m.id).order("created_at");
   const box = $("#cm-list"); if (cur !== i || !box) return;
-  if (error) return box.textContent = error.message;
+  if (error) return box.textContent = errEs(error);
   box.innerHTML = (data || []).length ? data.map(c => `<div class="cmt">${avatar(nameOf(c), c.user_id)}<div><b>${esc(nameOf(c))}</b> <small>${fmt(c.created_at)}</small><br>${esc(c.body)}${c.user_id === user?.id ? ` <a href="#" class="cdel" data-id="${c.id}">borrar</a>` : ""}</div></div>`).join("") : "Sé el primero en comentar 💬";
   box.querySelectorAll(".cdel").forEach(a => a.onclick = async e => { e.preventDefault(); await db.from("comments").delete().eq("id", a.dataset.id); loadComments(m, i); });
 }
@@ -517,10 +520,10 @@ async function sendComment(m) {
   inp.disabled = true;
   const { error } = await db.from("comments").insert({ media_id: m.id, body, author_name: myName() });
   inp.disabled = false;
-  if (error) return alert(error.message);
+  if (error) return alert(errEs(error));
   inp.value = ""; loadComments(m, cur); inp.focus();
 }
-function closeLb() { cur = -1; $("#lb").classList.remove("on"); $("#lb-in").innerHTML = ""; }
+function closeLb() { cur = -1; $("#lb").classList.remove("on"); $("#lb-in").innerHTML = ""; if (favDirty && user) { favDirty = false; loadMedia(); } }
 $("#lb-x").onclick = closeLb;
 $("#lb-p").onclick = () => openLb(cur - 1);
 $("#lb-n").onclick = () => openLb(cur + 1);
@@ -537,10 +540,10 @@ $("#lb").addEventListener("touchstart", e => sx = e.touches[0].clientX, { passiv
 $("#lb").addEventListener("touchend", e => { if (e.target.closest(".cm")) return; const d = e.changedTouches[0].clientX - sx; if (Math.abs(d) > 70) openLb(cur + (d < 0 ? 1 : -1)); }, { passive: true });
 
 /* ---------- Diálogo genérico ---------- */
-function ask(title, ph1, askName) {
+function ask(title, ph1, askName, init = "", opt = false) {
   return new Promise(res => {
     const d = $("#dlg");
-    $("#dlg-t").textContent = title; $("#dlg-1").placeholder = ph1; $("#dlg-1").value = "";
+    $("#dlg-t").textContent = title; $("#dlg-1").placeholder = ph1; $("#dlg-1").value = init; $("#dlg-1").required = !opt;
     $("#dlg-2").classList.toggle("hide", !askName); $("#dlg-2").value = user?.user_metadata?.name || "";
     d.onclose = () => res(d.returnValue === "ok" ? [$("#dlg-1").value.trim(), $("#dlg-2").value.trim()] : null);
     d.returnValue = ""; d.showModal();
@@ -549,15 +552,15 @@ function ask(title, ph1, askName) {
 $("#b-alb").onclick = async () => {
   const r = await ask("Nuevo álbum", "Nombre (ej. Viajes, Random)", false); if (!r || !r[0]) return;
   const { error } = await db.from("albums").insert({ name: r[0] });
-  if (error) return alert(error.message);
+  if (error) return alert(errEs(error));
   loadAlbums();
 };
 
 /* ---------- Cambiar mi nombre ---------- */
 async function changeName() {
-  const r = await ask("¿Cómo te llamas?", "Tu nombre", false); if (!r || !r[0]) return;
+  const r = await ask("¿Cómo te llamas?", "Tu nombre", false, user?.user_metadata?.name || ""); if (!r || !r[0]) return;
   const { data, error } = await db.auth.updateUser({ data: { name: r[0] } });
-  if (error) return alert(error.message);
+  if (error) return alert(errEs(error));
   user = data.user;
   await db.rpc("refresh_my_name");
   $("#hello").textContent = "Hola, " + r[0] + " ✏️";
@@ -565,13 +568,84 @@ async function changeName() {
 }
 $("#hello").onclick = changeName;
 
+/* ---------- Tarjetas por tandas, papelera, tiempo real ---------- */
+const PAGE = 36, moreIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { moreIO.unobserve(e.target); more(); } }), { rootMargin: "600px" });
+const capL = m => capOf(m) || "Recuerdo de " + nameOf(m);
+function cntHTML(m) {
+  const l = rx[m.id] || []; if (!l.length) return "";
+  return `<span class="cnt">${EMO.map(e => [e, l.filter(x => x.emoji === e).length]).sort((a, b) => b[1] - a[1])[0][0]} ${l.length}</span>`;
+}
+function syncTile(m) {
+  const t = $(`.item[data-i="${media.indexOf(m)}"]`); if (!t) return;
+  t.querySelector(".cnt")?.remove(); const h = cntHTML(m); if (h) t.querySelector(".dl").insertAdjacentHTML("afterend", h);
+}
+function tileHTML(m, i) {
+  const fv = favs.has(m.id);
+  return `<div class="item" data-i="${i}" role="button" tabindex="0" aria-label="${esc(capL(m))}">
+    ${m.kind === "video" ? `<video data-src="${m.url}#t=0.1" muted playsinline preload="none"></video><span class="play">▶ video</span>` : `<img src="${m.url}" loading="lazy" decoding="async" onload="this.classList.add('ok')" alt="${esc(capL(m))}">`}
+    <span class="by" data-u="${m.user_id}">${avatar(nameOf(m), m.user_id)}${esc(nameOf(m))}</span>
+    <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar">⬇</button>${cntHTML(m)}
+    <button class="fav ${fv ? "on" : ""}" data-i="${i}" aria-label="Favorita">${fv ? "★" : "☆"}</button></div>`;
+}
+function more() {
+  const g = $("#grid"), st = window._pg, from = st.n, to = Math.min(media.length, from + PAGE); if (from >= to) return;
+  st.n = to; let html = "";
+  for (let i = from; i < to; i++) {
+    const mes = view === "time" ? new Date(media[i].created_at).toLocaleDateString("es", { month: "long", year: "numeric" }) : "";
+    if (mes && mes !== st.last) { st.last = mes; html += `<h3 class="mes">${esc(mes)}</h3>`; }
+    html += tileHTML(media[i], i);
+  }
+  g.querySelector(".more")?.remove();
+  g.insertAdjacentHTML("beforeend", html + (to < media.length ? '<div class="more" style="grid-column:1/-1;height:1px"></div>' : ""));
+  bind(g, from);
+  const sn = g.querySelector(".more"); if (sn) moreIO.observe(sn);
+}
+function bind(g, from) {
+  [...g.querySelectorAll(".item")].filter(el => +el.dataset.i >= from).forEach(it => {
+    it.querySelectorAll("img,video").forEach(el => {
+      const base = (el.dataset.src || el.getAttribute("src") || "").split("#")[0], hash = el.tagName === "VIDEO" ? "#t=0.1" : "";
+      el.addEventListener("error", () => {
+        const n = +(el.dataset.t || 0);
+        if (n < 3) { el.dataset.t = n + 1; setTimeout(() => { el.src = base + "&r=" + (n + 1) + hash; }, 700 * (n + 1)); }
+        else if (Date.now() - lastLoad > 120000) loadMedia();
+      });
+    });
+    const v = it.querySelector("video[data-src]"); if (v) lazyIO.observe(v);
+    const m = () => media[+it.dataset.i], go = () => trashMode ? trashItem(m()) : openLb(+it.dataset.i);
+    it.onclick = go; it.onkeydown = e => { if ((e.key === "Enter" || e.key === " ") && e.target === it) { e.preventDefault(); go(); } };
+    it.querySelector(".fav").onclick = e => { e.stopPropagation(); toggleFav(m()); };
+    it.querySelector(".by").onclick = e => { e.stopPropagation(); openProfile(m().user_id); };
+    it.querySelector(".dl").onclick = e => { e.stopPropagation(); download(m()); };
+  });
+}
+async function trashItem(m) {
+  if (confirm("¿Restaurar este recuerdo?")) { const { error } = await db.from("media").update({ deleted_at: null }).eq("id", m.id); if (error) return alert(errEs(error)); return loadMedia(); }
+  if (confirm("¿Borrarlo para siempre? No se puede deshacer.")) { await db.from("media").delete().eq("id", m.id); await db.storage.from(BUCKET).remove([m.path]); loadMedia(); }
+}
+async function purgeOld() {
+  if (!hasTrash || purged) return; purged = true;
+  const { data } = await db.from("media").select("id,path").eq("user_id", user.id).lt("deleted_at", new Date(Date.now() - 7 * 864e5).toISOString());
+  if (data?.length) { await db.from("media").delete().in("id", data.map(x => x.id)); await db.storage.from(BUCKET).remove(data.map(x => x.path)); }
+}
+function startRT() {
+  if (rt || !db.channel) return;
+  try {
+    rt = db.channel("galeria").on("postgres_changes", { event: "*", schema: "public", table: "media" }, bump).on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, bump)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "comments" }, () => { if (cur >= 0 && media[cur]) loadComments(media[cur], cur); }).subscribe();
+  } catch { rt = null; }
+}
+function bump() { clearTimeout(rtT); rtT = setTimeout(() => { if (cur < 0 && !uploading && user) loadMedia(); }, 1500); }
+setInterval(() => { if (user && !document.hidden && cur < 0 && !uploading && Date.now() - lastLoad > 50 * 60000) loadMedia(); }, 60000);
+$("#d-trash").onclick = () => { if (!hasTrash) return alert("Primero ejecuta mejoras.sql en Supabase."); trashMode = true; onlyFav = false; who = null; aid = null; renderAlbums(); dr(false); loadMedia(); };
+try { $("#d-orig").checked = localStorage.getItem("orig") === "1"; $("#d-orig").onchange = e => localStorage.setItem("orig", e.target.checked ? "1" : "0"); } catch {}
+
 /* ---------- Favoritos ---------- */
 async function toggleFav(m) {
   const on = favs.has(m.id); on ? favs.delete(m.id) : favs.add(m.id);
   const b = $(`.fav[data-i="${media.indexOf(m)}"]`);
   if (b) { b.textContent = on ? "☆" : "★"; b.classList.toggle("on", !on); }
   const r = on ? await db.from("favorites").delete().match({ media_id: m.id, user_id: user.id }) : await db.from("favorites").insert({ media_id: m.id });
-  if (r.error) { alert(r.error.message); loadMedia(); }
+  if (r.error) { alert(errEs(r.error)); loadMedia(); } else if (onlyFav && on) { if (cur < 0) loadMedia(); else favDirty = true; }
 }
 
 /* ---------- Reacciones ---------- */
@@ -584,19 +658,22 @@ function renderRx(m) {
   }).join("") + `<button class="rxb ${favs.has(m.id) ? "on" : ""}" id="lb-f" aria-label="Favorita">${favs.has(m.id) ? "★" : "☆"}</button>`;
   $("#rxs").querySelectorAll("[data-e]").forEach(b => b.onclick = () => react(m, b.dataset.e));
   $("#lb-f").onclick = async () => { await toggleFav(m); renderRx(m); };
+  syncTile(m);
 }
 async function react(m, e) {
   const l = rx[m.id] || (rx[m.id] = []), k = l.findIndex(x => x.emoji === e && x.user_id === user.id);
   let r;
   if (k >= 0) { l.splice(k, 1); renderRx(m); r = await db.from("reactions").delete().match({ media_id: m.id, user_id: user.id, emoji: e }); }
   else { l.push({ media_id: m.id, user_id: user.id, emoji: e }); renderRx(m); r = await db.from("reactions").insert({ media_id: m.id, emoji: e }); }
-  if (r.error) alert(r.error.message);
+  if (r.error) alert(errEs(r.error));
 }
 
 /* ---------- Perfiles ---------- */
-function openProfile(uid) { who = uid; closeLb(); loadMedia(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+function openProfile(uid) { trashMode = false; who = uid; closeLb(); loadMedia(); window.scrollTo({ top: 0, behavior: "smooth" }); }
 function renderProfile() {
-  const p = $("#prof"); if (!who) return p.classList.add("hide");
+  const p = $("#prof");
+  if (trashMode) { p.classList.remove("hide"); p.innerHTML = `<b>🗑 Papelera</b><p>Lo que borras se guarda 7 días. Toca un recuerdo para restaurarlo o borrarlo para siempre.</p><button class="btn small ghost" id="p-x">✕ Salir de la papelera</button>`; $("#p-x").onclick = () => { trashMode = false; loadMedia(); }; return; }
+  if (!who) return p.classList.add("hide");
   const mine = who === user.id, n = userNames[who] || (mine ? myName() : "alguien");
   p.classList.remove("hide");
   p.innerHTML = `<div style="display:flex;gap:1rem;align-items:center">${avatar(n, who).replace('class="av"', 'class="av big"')}
@@ -606,9 +683,9 @@ function renderProfile() {
     ${mine ? `<button class="btn small" id="p-e">Editar bio</button>` : ""}`;
   $("#p-x").onclick = () => { who = null; loadMedia(); };
   if (mine) $("#p-e").onclick = async () => {
-    const r = await ask("Tu bio", "Algo sobre ti (máx. 160)", false); if (!r || !r[0]) return;
+    const r = await ask("Tu bio", "Algo sobre ti (máx. 160)", false, bios[user.id] || "", true); if (!r) return;
     const { error } = await db.from("profiles").upsert({ id: user.id, bio: r[0].slice(0, 160) });
-    if (error) return alert(error.message);
+    if (error) return alert(errEs(error));
     bios[user.id] = r[0].slice(0, 160); renderProfile();
   };
 }
@@ -646,16 +723,16 @@ $("#av-file").onchange = async e => {
     if (r.error) { await db.storage.from(BUCKET).remove([path]); throw r.error; }
     const old = avPath[user.id]; if (old) db.storage.from(BUCKET).remove([old]);
     loadMedia();
-  } catch (er) { alert("No se pudo cambiar la foto: " + er.message); }
+  } catch (er) { alert("No se pudo cambiar la foto: " + errEs(er)); }
 };
 $("#d-avdel").onclick = async () => {
   const old = avPath[user.id]; if (!old || !confirm("¿Quitar tu foto de perfil?")) return;
   await db.from("profiles").upsert({ id: user.id, avatar_path: null }); db.storage.from(BUCKET).remove([old]); loadMedia();
 };
 $("#d-bioedit").onclick = async () => {
-  const r = await ask("Tu bio", "Algo sobre ti (máx. 160)", false); if (!r || !r[0]) return;
+  const r = await ask("Tu bio", "Algo sobre ti (máx. 160)", false, bios[user.id] || "", true); if (!r) return;
   const { error } = await db.from("profiles").upsert({ id: user.id, bio: r[0].slice(0, 160) });
-  if (error) return alert(error.message);
+  if (error) return alert(errEs(error));
   bios[user.id] = r[0].slice(0, 160); renderMenu(); renderProfile();
 };
 
@@ -664,7 +741,7 @@ function renderMenu() {
   if (!user) return;
   $("#d-av").innerHTML = avatar(myName(), user.id);
   $("#d-bio").textContent = bios[user.id] || "Añade una bio";
-  $("#d-avdel").classList.toggle("hide", !avPath[user.id]); updLockBtn();
+  $("#d-avdel").classList.toggle("hide", !avPath[user.id]);
 }
 function dr(v) { show("#drawer", v); if (v) renderMenu(); }
 $("#theme").classList.remove("theme"); $("#d-theme").append($("#theme"));
@@ -675,48 +752,40 @@ $("#b-me").addEventListener("click", () => dr(false));
 $("#d-fav").onclick = () => { onlyFav = true; aid = null; renderAlbums(); loadMedia(); dr(false); };
 document.addEventListener("keydown", e => { if (e.key === "Escape") dr(false); });
 
-/* ---------- Bloqueo con Face ID / Touch ID / código del teléfono ---------- */
-const b64 = b => btoa(String.fromCharCode(...new Uint8Array(b))), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
-function lockId() { try { return user && localStorage.getItem("lock_" + user.id); } catch { return null; } }
-function updLockBtn() { $("#d-lock").textContent = lockId() ? "🔒 Bloqueo activado · quitar" : "🔒 Activar Face ID / código"; }
-function checkLock() { if (lockId() && !unlocked) { show("#lock", true); $("#lk-msg").textContent = ""; } }
-async function toggleLock() {
-  if (lockId()) { localStorage.removeItem("lock_" + user.id); return updLockBtn(); }
-  if (!window.PublicKeyCredential) return alert("Este navegador no permite Face ID / passkeys.");
-  try {
-    const c = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "Nuestra Galería" },
-      user: { id: new TextEncoder().encode(user.id), name: user.email, displayName: myName() },
-      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "preferred" }, timeout: 60000 } });
-    localStorage.setItem("lock_" + user.id, b64(c.rawId)); unlocked = true; updLockBtn();
-  } catch (e) { alert("No se activó: " + e.message); }
+/* ---------- Descripciones ---------- */
+const capOf = m => /\.[a-z0-9]{2,5}$/i.test(m.caption || "") ? "" : (m.caption || "");
+function renderCap(m) {
+  const c = capOf(m), mine = m.user_id === user.id;
+  $("#cap").innerHTML = (c ? `<span>${esc(c)}</span>` : "") + (mine ? `<a href="#" id="cap-e">${c ? "✏️ Editar" : "✏️ Añadir descripción"}</a>` : "");
+  if (mine) $("#cap-e").onclick = async e => {
+    e.preventDefault();
+    const r = await ask("Descripción", "Ej: Playa, verano 2026", false, capOf(m), true); if (!r) return;
+    const t = r[0].trim().slice(0, 300);
+    const { error } = await db.from("media").update({ caption: t }).eq("id", m.id);
+    if (error) return alert(errEs(error));
+    m.caption = t; renderCap(m);
+  };
 }
-async function unlock() {
-  try {
-    await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: "required", timeout: 60000,
-      allowCredentials: [{ type: "public-key", id: unb64(lockId()), transports: ["internal"] }] } });
-    unlocked = true; show("#lock", false);
-  } catch { $("#lk-msg").textContent = "No se pudo verificar. Intenta otra vez."; }
-}
-$("#d-lock").onclick = toggleLock; $("#lk-go").onclick = unlock;
-$("#lk-out").onclick = () => db.auth.signOut();
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) hiddenAt = Date.now();
-  else if (user && lockId() && Date.now() - hiddenAt > 60000) { unlocked = false; checkLock(); }
-});
 
 /* ---------- Olvidé mi contraseña ---------- */
 $("#a-forgot").onclick = async e => {
   e.preventDefault(); const email = $("#a-mail").value.trim(), msg = $("#a-msg");
   if (!email) return msg.textContent = "Escribe tu correo arriba y vuelve a tocar el enlace.";
   const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-  msg.textContent = error ? error.message : "Te enviamos un enlace al correo para crear una contraseña nueva.";
+  msg.textContent = error ? errEs(error) : "Te enviamos un enlace al correo para crear una contraseña nueva.";
 };
 db.auth.onAuthStateChange(async ev => {
   if (ev !== "PASSWORD_RECOVERY") return;
   const np = prompt("Escribe tu nueva contraseña (mín. 6):");
-  if (np && np.length >= 6) { const { error } = await db.auth.updateUser({ password: np }); alert(error ? error.message : "Contraseña cambiada ✅"); }
+  if (np && np.length >= 6) { const { error } = await db.auth.updateUser({ password: np }); alert(error ? errEs(error) : "Contraseña cambiada ✅"); }
 });
+
+/* ---------- Selector visual de temas ---------- */
+const SW = { auto:"conic-gradient(#00a896,#d6336c,#7c9cff,#f2c14e,#00a896)", caribe:"linear-gradient(135deg,#00a896,#fff1cf)", sakura:"linear-gradient(135deg,#ff5c93,#e9dcff)", aurora:"linear-gradient(135deg,#2dd4a7,#a78bfa)", sunset:"linear-gradient(135deg,#2a0d5e,#ff7a45)", synth:"linear-gradient(135deg,#22d3ee,#ff2e93)", oro:"linear-gradient(135deg,#0a0907,#f2c14e)", noche:"linear-gradient(135deg,#0b1020,#7c9cff)" };
+$("#d-theme").insertAdjacentHTML("beforeend", `<div class="sws">${Object.keys(THEMES).map(k => `<button class="sw" data-t="${k}" title="${THEMES[k]}" aria-label="${THEMES[k]}" style="background:${SW[k]}"></button>`).join("")}</div>`);
+const markSw = () => { let t = "auto"; try { t = localStorage.getItem("tema") || "auto"; } catch {} document.querySelectorAll(".sw").forEach(b => b.classList.toggle("on", b.dataset.t === t)); };
+document.querySelectorAll(".sw").forEach(b => b.onclick = () => { try { localStorage.setItem("tema", b.dataset.t); } catch {} applyTheme(); markSw(); });
+$("#theme").addEventListener("change", markSw); markSw();
 </script>
 </body>
 </html>
