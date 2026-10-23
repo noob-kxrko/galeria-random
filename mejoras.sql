@@ -41,3 +41,9 @@ begin
 end $$;
 drop trigger if exists allowed_email_check on auth.users;
 create trigger allowed_email_check before insert on auth.users for each row execute function public.check_allowed_email();
+
+-- 6) Miniaturas compartidas: cualquier miembro puede CREAR (no reemplazar) la miniatura .t.jpg de una foto o video.
+-- Así, quien abra la galería primero deja listas las portadas para todos.
+drop policy if exists "fotos miniaturas" on storage.objects;
+create policy "fotos miniaturas" on storage.objects for insert to authenticated
+  with check (bucket_id = 'fotos' and name like '%.t.jpg');
