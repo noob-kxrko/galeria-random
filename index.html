@@ -7,6 +7,8 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#06060a">
+<link rel="preconnect" href="https://lcpyocjutxdishxridmx.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -419,7 +421,24 @@ function errEs(e) {
   const m = String(e?.message || e || ""), T = [[/invalid login/i, "Correo o contraseña incorrectos."], [/not confirmed/i, "Primero confirma tu correo."], [/already registered/i, "Ese correo ya tiene cuenta."], [/database error saving new user/i, "Este correo no está autorizado para esta galería."], [/at least 6|weak/i, "La contraseña debe tener al menos 6 caracteres."], [/rate limit|too many/i, "Demasiados intentos. Espera un momento."], [/failed to fetch|network/i, "Sin conexión. Revisa tu internet."], [/row-level security|permission|not allowed/i, "No tienes permiso para hacer eso."], [/too large|exceeded/i, "El archivo es demasiado grande."]];
   return (T.find(([r]) => r.test(m)) || [0, m])[1];
 }
-const lazyIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.src = e.target.dataset.src; lazyIO.unobserve(e.target); } }), { rootMargin: "400px" });
+const EXP = 86400, FRESH = 20 * 3600e3;
+const thumbPath = p => p.replace(/\.[^./]+$/, "") + ".t.jpg";
+let urlc = {}; try { urlc = JSON.parse(localStorage.getItem("urlc") || "{}"); const t0 = Date.now(); for (const k in urlc) if (t0 - urlc[k].t > EXP * 1000) delete urlc[k]; } catch {}
+async function signAll(paths) {
+  const now = Date.now(), need = [...new Set(paths)].filter(p => !(urlc[p] && now - urlc[p].t < FRESH));
+  let ok = true, err = null;
+  if (need.length) {
+    const { data, error } = await db.storage.from(BUCKET).createSignedUrls(need, EXP);
+    if (error || !data) { ok = false; err = error; }
+    else {
+      const got = new Set(); data.forEach(d => { if (d.signedUrl) { urlc[d.path] = { u: d.signedUrl, t: now }; got.add(d.path); } });
+      need.forEach(p => { if (!got.has(p) && p.endsWith(".t.jpg")) urlc[p] = { u: null, t: now }; });
+      try { localStorage.setItem("urlc", JSON.stringify(urlc)); } catch {}
+    }
+  }
+  return { ok, err, pick: p => urlc[p]?.u };
+}
+const lazyIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.preload = "metadata"; e.target.src = e.target.dataset.src; lazyIO.unobserve(e.target); } }), { rootMargin: "900px" });
 
 /* ---------- Sincronización robusta de sesión (Sin bloqueos en blanco) ---------- */
 async function initApp() {
@@ -441,7 +460,7 @@ function setSessionUser(u) {
   show("#auth", !u);
   show("#app", !!u);
   if (!u) {
-    albums = []; media = []; who = null; onlyFav = false; avImg = {}; avPath = {}; trashMode = false; if (rt) { try { db.removeChannel(rt); } catch {} rt = null; } show("#drawer", false); closeLb();
+    albums = []; media = []; who = null; onlyFav = false; avImg = {}; avPath = {}; try { localStorage.removeItem("urlc"); localStorage.removeItem("snap"); } catch {} urlc = {}; trashMode = false; if (rt) { try { db.removeChannel(rt); } catch {} rt = null; } show("#drawer", false); closeLb();
     return;
   }
   $("#hello").textContent = "Hola, " + (u.user_metadata?.name || u.email.split("@")[0]) + " ✏️";
@@ -502,6 +521,8 @@ async function loadNames() {
 
 async function loadMedia(retryCount = 0) {
   const my = ++tok;
+  if (!window._snapTried) { window._snapTried = true; try { const sn = JSON.parse(localStorage.getItem("snap") || "null");
+    if (sn && sn.uid === user.id && Date.now() - sn.t < 3 * 3600e3 && !aid && !who && !onlyFav && !trashMode) { favs = new Set(sn.favs); rx = sn.rx || {}; paint(sn.media); window._lastSig = sigOf(sn.media); } } catch {} }
   if (!$("#grid").children.length) $("#grid").innerHTML = '<div class="sk"></div>'.repeat(8);
   let q = db.from("media").select("*").order("created_at", { ascending: false });
   if (hasTrash) q = trashMode ? q.eq("user_id", user.id).not("deleted_at", "is", null) : q.is("deleted_at", null);
@@ -528,30 +549,22 @@ async function loadMedia(retryCount = 0) {
     return;
   }
 
-  if (media.length) {
-    const { data: urls, error: e2 } = await db.storage.from(BUCKET).createSignedUrls(media.map(m => m.path), 3600);
-    if (my !== tok) return;
-    if (!e2 && urls) {
-      const map = Object.fromEntries(urls.map(u => [u.path, u.signedUrl]));
-      media.forEach(m => m.url = map[m.path]);
-      const gone = media.filter(m => !m.url), mine = gone.filter(m => m.user_id === user.id); media = media.filter(m => m.url);
-      if (gone.length) { $("#up-msg").innerHTML = `${gone.length} registro(s) sin archivo ocultos.` + (mine.length ? ` <a href="#" id="clean">Borrar los ${mine.length} míos</a>` : ""); const c = $("#clean"); if (c) c.onclick = async ev => { ev.preventDefault(); await db.from("media").delete().in("id", mine.map(x => x.id)); $("#up-msg").textContent = ""; loadMedia(); }; }
-    }
-  }
-  
+  let prof = p.data; if (p.error) prof = (await db.from("profiles").select("id,bio")).data;
+  const [sg] = await Promise.all([media.length ? signAll(media.flatMap(m => [m.path, thumbPath(m.path)])) : { ok: true, pick: () => null }, loadAvatars(prof || [])]);
+  if (my !== tok) return;
+  if (!sg.ok) { $("#up-msg").textContent = errEs(sg.err) || "No se pudieron cargar las fotos. Toca Actualizar."; return; }
+  media.forEach(m => { m.url = sg.pick(m.path); m.turl = sg.pick(thumbPath(m.path)); });
+  { const gone = media.filter(m => !m.url), mine = gone.filter(m => m.user_id === user.id); media = media.filter(m => m.url);
+    if (gone.length) { $("#up-msg").innerHTML = `${gone.length} registro(s) sin archivo ocultos.` + (mine.length ? ` <a href="#" id="clean">Borrar los ${mine.length} míos</a>` : ""); const c = $("#clean"); if (c) c.onclick = async ev => { ev.preventDefault(); await db.from("media").delete().in("id", mine.map(x => x.id)); $("#up-msg").textContent = ""; loadMedia(); }; } }
+  const all = media;
   lastLoad = Date.now(); purgeOld();
   favs = new Set((f.data || []).map(x => x.media_id)); rx = {};
   (r.data || []).forEach(x => (rx[x.media_id] ||= []).push(x));
-  let prof = p.data; if (p.error) prof = (await db.from("profiles").select("id,bio")).data;
   bios = Object.fromEntries((prof || []).map(x => [x.id, x.bio || ""]));
-  await loadAvatars(prof || []);
-  if (onlyFav) media = media.filter(m => favs.has(m.id));
-  if (who) media = media.filter(m => m.user_id === who);
-  renderProfile(); renderHero();
-  show("#empty-m", !media.length);
-  window._pg = { last: "", n: 0 };
-  $("#grid").innerHTML = "";
-  more();
+  if (!aid && !trashMode) saveSnap(all);
+  const sg2 = sigOf(all);
+  if (sg2 === window._lastSig && window._painted) media = window._painted; else { window._lastSig = sg2; paint(all); }
+  if (!window._bfDone) { window._bfDone = true; setTimeout(backfill, 1200); }
 }
 
 document.addEventListener("visibilitychange", () => { if (!document.hidden && user && cur < 0 && !uploading && Date.now() - lastLoad > 60000) loadMedia(); });
@@ -561,20 +574,23 @@ $("#b-ref").onclick = () => { $("#up-msg").textContent = ""; loadAlbums(); };
 const MAX_MB = 50;
 window.addEventListener("beforeunload", e => { if (uploading) { e.preventDefault(); e.returnValue = ""; } });
 async function uploadOne(f0, album) {
-  const f = localStorage.getItem("orig") === "1" ? f0 : await shrink(f0);
+  const isVid = f0.type.startsWith("video") || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f0.name), kind = isVid ? "video" : "image";
+  const f = isVid || localStorage.getItem("orig") === "1" ? f0 : await shrink(f0);
   if (f.size > MAX_MB * 1048576) throw new Error(`pesa más de ${MAX_MB} MB`);
   const ext = (f.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const tp = makeThumb(f, kind);  // la miniatura se prepara mientras sube el archivo
   let path, err;
   for (let t = 0; t < 3; t++) {
     if (t) await new Promise(r => setTimeout(r, 800 * t));
     path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-    const up = await db.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined });
+    const up = await db.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined, cacheControl: "31536000" });
     if (!up.error) { err = null; break; } err = up.error;
   }
   if (err) throw err;
-  const kind = f.type.startsWith("video") || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name) ? "video" : "image";
+  const tb = await tp;
+  if (tb) await db.storage.from(BUCKET).upload(thumbPath(path), tb, { contentType: "image/jpeg", cacheControl: "31536000" });
   const ins = await db.from("media").insert({ album_id: album, path, kind, caption: "", author_name: myName() });
-  if (ins.error) { await db.storage.from(BUCKET).remove([path]); throw ins.error; }
+  if (ins.error) { await db.storage.from(BUCKET).remove([path, thumbPath(path)]); throw ins.error; }
 }
 $("#file").onchange = async e => {
   const files = [...e.target.files]; if (!files.length) return;
@@ -583,16 +599,61 @@ $("#file").onchange = async e => {
   const tick = () => { $("#up-msg").textContent = `Subiendo ${done} de ${files.length}…`; bar.firstElementChild.style.width = (done / files.length * 100) + "%"; };
   tick();
   const worker = async () => { while (next < files.length) { const f = files[next++]; try { await uploadOne(f, album); ok++; } catch (er) { fails.push(`${f.name}: ${errEs(er)}`); } done++; tick(); } };
-  await Promise.all(Array.from({ length: Math.min(3, files.length) }, worker));
+  await Promise.all(Array.from({ length: Math.min(4, files.length) }, worker));
   btn.disabled = false; uploading = false; e.target.value = ""; bar.classList.add("hide");
   const odd = files.filter(f => /\.(mov|heic|heif)$/i.test(f.name)).length;
   $("#up-msg").textContent = (fails.length ? `Se subieron ${ok} de ${files.length}. Falló: ${fails.join(" · ")}` : "¡Listo! 🌼") + (odd ? ` ⚠️ ${odd} archivo(s) .mov/HEIC pueden no verse en todos los dispositivos.` : "");
   loadMedia();
 };
 
+/* ---------- Pintar, miniaturas y vistas previas de video ---------- */
+function paint(all) {
+  media = all; if (onlyFav) media = media.filter(m => favs.has(m.id)); if (who) media = media.filter(m => m.user_id === who);
+  renderProfile(); renderHero(); show("#empty-m", !media.length);
+  window._pg = { last: "", n: 0 }; $("#grid").innerHTML = ""; more(); window._painted = media;
+}
+const sigOf = a => [aid, who, onlyFav, trashMode, view, JSON.stringify(avImg), JSON.stringify(bios), a.map(m => m.id + (rx[m.id] || []).length + (favs.has(m.id) ? "f" : "") + (m.turl ? "t" : "")).join()].join("|");
+function saveSnap(all) { try { localStorage.setItem("snap", JSON.stringify({ uid: user.id, t: Date.now(), media: all.slice(0, 300), favs: [...favs], rx })); } catch {} }
+function drawThumb(src, w, h) {
+  const k = Math.min(1, 480 / Math.max(w, h)), c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height); return new Promise(r => c.toBlob(r, "image/jpeg", .72));
+}
+async function makeThumb(src, kind) {
+  try {
+    if (kind === "image") { const bm = await createImageBitmap(src, { imageOrientation: "from-image" }); const b = await drawThumb(bm, bm.width, bm.height); bm.close?.(); return b; }
+    return await new Promise(res => {
+      const v = document.createElement("video"), url = typeof src === "string" ? src : URL.createObjectURL(src);
+      v.muted = true; v.playsInline = true; v.preload = "auto"; v.crossOrigin = "anonymous";
+      const done = b => { clearTimeout(t); if (typeof src !== "string") URL.revokeObjectURL(url); v.removeAttribute("src"); v.load(); res(b); }, t = setTimeout(() => done(null), 6000);
+      v.onloadedmetadata = () => { v.currentTime = Math.min(1, (v.duration || 1) * .1); };
+      v.onseeked = async () => done(v.videoWidth ? await drawThumb(v, v.videoWidth, v.videoHeight).catch(() => null) : null);
+      v.onerror = () => done(null); v.src = url;
+    });
+  } catch { return null; }
+}
+let bf = false, bfRounds = 0;
+async function backfill() {
+  if (bf || !user || navigator.connection?.saveData || bfRounds >= 12) return; bf = true; bfRounds++;
+  let fail = {}; try { fail = JSON.parse(localStorage.getItem("bffail2") || "{}"); } catch {}
+  const now = Date.now(), todo = media.filter(m => !m.turl && m.url && !(fail[m.path] && now - fail[m.path] < 864e5)).slice(0, 30);
+  let i = 0, okn = 0;
+  const work = async () => { while (i < todo.length) { const m = todo[i++];
+    try {
+      const tb = await makeThumb(m.kind === "video" ? m.url : await (await fetch(m.url)).blob(), m.kind);
+      if (!tb) throw 0;
+      const { error } = await db.storage.from(BUCKET).upload(thumbPath(m.path), tb, { contentType: "image/jpeg", cacheControl: "31536000" });
+      if (error && !/exist|duplicate/i.test(error.message || "")) throw 0;
+      delete urlc[thumbPath(m.path)]; okn++;
+    } catch { fail[m.path] = Date.now(); } } };
+  await Promise.all([work(), work()]);
+  try { localStorage.setItem("bffail2", JSON.stringify(fail)); localStorage.setItem("urlc", JSON.stringify(urlc)); } catch {}
+  bf = false;
+  if (okn) { lastLoad = 0; await loadMedia(); setTimeout(backfill, 1500); }
+}
+
 /* ---------- Reducir fotos antes de subir ---------- */
 async function shrink(f) {
-  if (!f.type.startsWith("image/") || f.type === "image/gif" || f.type === "image/svg+xml") return f;
+  if (!f.type.startsWith("image/") || f.type === "image/gif" || f.type === "image/svg+xml" || f.size < 350 * 1024) return f;
   try {
     const bmp = await createImageBitmap(f, { imageOrientation: "from-image" });
     const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
@@ -621,7 +682,7 @@ async function download(m) {
 function openLb(i) {
   if (i < 0 || i >= media.length) return;
   cur = i; const m = media[i], who = nameOf(m);
-  $("#lb-in").innerHTML = `<div class="stage">${m.kind === "video" ? `<video src="${m.url}" controls autoplay muted playsinline></video>` : `<img src="${m.url}" alt="${esc(capL(m))}">`}</div>
+  $("#lb-in").innerHTML = `<div class="stage">${m.kind === "video" ? `<video src="${m.url}" poster="${m.turl || ""}" controls autoplay muted playsinline preload="auto"></video>` : `<img src="${m.url}" alt="${esc(capL(m))}"${m.turl ? ` style="background:center/contain no-repeat url('${m.turl}')"` : ""}>`}</div>
     <div class="panel">
      <div class="who-row">${avatar(who, m.user_id)}<div><b class="who" data-u="${m.user_id}">${esc(who)}</b><small>${fmt(m.created_at)}</small></div></div>
      <div class="cap" id="cap"></div>
@@ -632,6 +693,7 @@ function openLb(i) {
      <div class="cm-new"><input id="cm-in" maxlength="500" placeholder="Escribe un comentario…"><button class="btn small" id="cm-go">Enviar</button></div></div>
     </div>`;
   $("#lb").classList.add("on");
+  [i + 1, i - 1].forEach(j => { const n = media[j]; if (n && n.kind === "image") new Image().src = n.url; });
   $("#lb-p").classList.toggle("hide", i === 0); $("#lb-n").classList.toggle("hide", i === media.length - 1);
   $("#lb-d").onclick = () => download(m);
   renderCap(m);
@@ -643,7 +705,7 @@ function openLb(i) {
   if (del) del.onclick = async () => {
     if (!confirm("¿Eliminar este recuerdo?")) return;
     if (hasTrash) { const r = await db.from("media").update({ deleted_at: new Date().toISOString() }).eq("id", m.id); if (r.error) return alert(errEs(r.error)); }
-    else { const r = await db.from("media").delete().eq("id", m.id); if (r.error) return alert(errEs(r.error)); await db.storage.from(BUCKET).remove([m.path]); }
+    else { const r = await db.from("media").delete().eq("id", m.id); if (r.error) return alert(errEs(r.error)); await db.storage.from(BUCKET).remove([m.path, thumbPath(m.path)]); }
     closeLb(); loadMedia();
   };
   loadComments(m, i);
@@ -722,7 +784,7 @@ function syncTile(m) {
 function tileHTML(m, i) {
   const fv = favs.has(m.id);
   return `<div class="item" data-i="${i}" role="button" tabindex="0" aria-label="${esc(capL(m))}">
-    ${m.kind === "video" ? `<video data-src="${m.url}#t=0.1" muted playsinline preload="none"></video><span class="play"><svg class="i f"><use href="#i-play"/></svg>video</span>` : `<img src="${m.url}" loading="lazy" decoding="async" onload="this.classList.add('ok')" alt="${esc(capL(m))}">`}
+    ${m.kind === "video" ? `${m.turl ? `<img src="${m.turl}" loading="${i < 8 ? "eager" : "lazy"}" decoding="async" onload="this.classList.add('ok')" alt="${esc(capL(m))}">` : `<video data-src="${m.url}#t=0.1" muted playsinline preload="metadata"></video>`}<span class="play"><svg class="i f"><use href="#i-play"/></svg>video</span>` : `<img src="${m.turl || m.url}" loading="${i < 8 ? "eager" : "lazy"}" decoding="async" onload="this.classList.add('ok')" alt="${esc(capL(m))}">`}
     <span class="by" data-u="${m.user_id}">${avatar(nameOf(m), m.user_id)}${esc(nameOf(m))}</span>
     <button class="dl" data-i="${i}" title="Descargar" aria-label="Descargar"><svg class="i"><use href="#i-dl"/></svg></button>${cntHTML(m)}
     <button class="fav ${fv ? "on" : ""}" data-i="${i}" aria-label="Favorita"><svg class="i"><use href="#i-star"/></svg></button></div>`;
@@ -760,12 +822,12 @@ function bind(g, from) {
 }
 async function trashItem(m) {
   if (confirm("¿Restaurar este recuerdo?")) { const { error } = await db.from("media").update({ deleted_at: null }).eq("id", m.id); if (error) return alert(errEs(error)); return loadMedia(); }
-  if (confirm("¿Borrarlo para siempre? No se puede deshacer.")) { await db.from("media").delete().eq("id", m.id); await db.storage.from(BUCKET).remove([m.path]); loadMedia(); }
+  if (confirm("¿Borrarlo para siempre? No se puede deshacer.")) { await db.from("media").delete().eq("id", m.id); await db.storage.from(BUCKET).remove([m.path, thumbPath(m.path)]); loadMedia(); }
 }
 async function purgeOld() {
   if (!hasTrash || purged) return; purged = true;
   const { data } = await db.from("media").select("id,path").eq("user_id", user.id).lt("deleted_at", new Date(Date.now() - 7 * 864e5).toISOString());
-  if (data?.length) { await db.from("media").delete().in("id", data.map(x => x.id)); await db.storage.from(BUCKET).remove(data.map(x => x.path)); }
+  if (data?.length) { await db.from("media").delete().in("id", data.map(x => x.id)); await db.storage.from(BUCKET).remove(data.flatMap(x => [x.path, thumbPath(x.path)])); }
 }
 function startRT() {
   if (rt || !db.channel) return;
@@ -853,8 +915,8 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) naviga
 async function loadAvatars(rows) {
   const ps = rows.filter(x => x.avatar_path); avImg = {}; avPath = Object.fromEntries(ps.map(x => [x.id, x.avatar_path]));
   if (ps.length) {
-    const { data } = await db.storage.from(BUCKET).createSignedUrls(ps.map(x => x.avatar_path), 3600);
-    (data || []).forEach(d => { const o = ps.find(x => x.avatar_path === d.path); if (o && d.signedUrl) avImg[o.id] = d.signedUrl; });
+    const { pick } = await signAll(ps.map(x => x.avatar_path));
+    ps.forEach(o => { const u = pick(o.avatar_path); if (u) avImg[o.id] = u; });
   }
   renderMenu();
 }
